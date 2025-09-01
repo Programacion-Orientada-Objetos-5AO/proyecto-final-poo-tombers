@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {
         log.info("Recurso no encontrado: {}", ex.getMessage());
         return problem;
     }
-    
+
     @ExceptionHandler(NoResourceFoundException.class)
     public ProblemDetail handleNoResourceFoundException(NoResourceFoundException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
@@ -102,7 +102,7 @@ public class GlobalExceptionHandler {
         problem.setType(URI.create("https://http.dev/problems/invalid-argument"));
         return problem;
     }
-    
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneric(Exception ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -110,6 +110,39 @@ public class GlobalExceptionHandler {
         problem.setDetail("Ha ocurrido un error inesperado");
         problem.setType(URI.create("https://http.dev/problems/internal-error"));
         log.error("Error no controlado", ex);
+        return problem;
+    }
+
+    // Agregar controlador para error de bad credentials
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ProblemDetail handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        problem.setTitle("Credenciales inválidas");
+        problem.setDetail("El nombre de usuario o la contraseña son incorrectos");
+        problem.setType(URI.create("https://http.dev/problems/unauthorized"));
+        log.warn("Intento de autenticación fallido: {}", ex.getMessage());
+        return problem;
+    }
+
+    // Agregar controlador para error de servicio de autenticación interno
+    @ExceptionHandler(org.springframework.security.authentication.InternalAuthenticationServiceException.class)
+    public ProblemDetail handleInternalAuthenticationServiceException(org.springframework.security.authentication.InternalAuthenticationServiceException ex) {
+        // Verificar si la causa es EntityNotFoundException (usuario no encontrado)
+        if (ex.getCause() instanceof jakarta.persistence.EntityNotFoundException) {
+            ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+            problem.setTitle("Recurso no encontrado");
+            problem.setDetail(ex.getCause().getMessage());
+            problem.setType(URI.create("https://http.dev/problems/not-found"));
+            log.info("Usuario no encontrado durante autenticación: {}", ex.getCause().getMessage());
+            return problem;
+        }
+
+        // Para otros errores de autenticación interna
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        problem.setTitle("Error de autenticación");
+        problem.setDetail("Error interno en el proceso de autenticación");
+        problem.setType(URI.create("https://http.dev/problems/unauthorized"));
+        log.error("Error interno de autenticación", ex);
         return problem;
     }
 }

@@ -14,6 +14,7 @@ import ar.edu.huergo.tombers.entity.Project;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ProjectMapper {
 
+    // Ignorar propiedades que no existen en ProjectCreateRequest para evitar errores de compilacion
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)

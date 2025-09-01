@@ -1,15 +1,16 @@
 package ar.edu.huergo.tombers.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import ar.edu.huergo.tombers.dto.user.UserResponse;
 import ar.edu.huergo.tombers.dto.user.UserUpdateRequest;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.mapper.UserMapper;
 import ar.edu.huergo.tombers.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,17 +21,17 @@ public class UserService {
 
     public UserResponse getUserProfile(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + email));
         return userMapper.toDto(user);
     }
 
     public UserResponse updateUserProfile(String email, UserUpdateRequest request) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + email));
+
         userMapper.updateEntity(user, request);
         User updatedUser = userRepository.save(user);
-        
+
         return userMapper.toDto(updatedUser);
     }
 

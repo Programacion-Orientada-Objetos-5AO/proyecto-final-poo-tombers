@@ -106,7 +106,12 @@ public class User implements UserDetails {
         DISPONIBLE, OCUPADO, INACTIVO
     }
 
-    // UserDetails implementation
+    // UserDetails
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("USER"));

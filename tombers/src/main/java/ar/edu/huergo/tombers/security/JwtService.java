@@ -19,10 +19,10 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 
-    @Value("${spring.security.jwt.secret}")
+    @Value("${security.jwt.secret}")
     private String secretKey;
 
-    @Value("${spring.security.jwt.expiration}")
+    @Value("${security.jwt.expiration-ms}")
     private long jwtExpiration;
 
     public String extractUsername(String token) {

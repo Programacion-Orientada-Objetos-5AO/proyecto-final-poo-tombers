@@ -1,19 +1,21 @@
 package ar.edu.huergo.tombers.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import ar.edu.huergo.tombers.dto.auth.AuthResponse;
 import ar.edu.huergo.tombers.dto.auth.LoginRequest;
 import ar.edu.huergo.tombers.dto.auth.RegisterRequest;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.repository.UserRepository;
 import ar.edu.huergo.tombers.security.JwtService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,12 +29,12 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         // Verificar si el email ya existe
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("El email ya está registrado");
+            throw new IllegalArgumentException("El email ya está registrado");
         }
 
         // Verificar si el username ya existe
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("El nombre de usuario ya está en uso");
+            throw new IllegalArgumentException("El nombre de usuario ya está en uso");
         }
 
         // Crear nuevo usuario
@@ -85,7 +87,7 @@ public class AuthService {
 
         // Obtener usuario autenticado
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
         // Generar token JWT
         String token = jwtService.generateToken(user);
