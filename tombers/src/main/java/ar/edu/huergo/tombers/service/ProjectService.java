@@ -5,6 +5,7 @@ import ar.edu.huergo.tombers.dto.project.ProjectResponse;
 import ar.edu.huergo.tombers.entity.Project;
 import ar.edu.huergo.tombers.mapper.ProjectMapper;
 import ar.edu.huergo.tombers.repository.ProjectRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,7 @@ public class ProjectService {
 
     public ProjectResponse getProjectById(Long id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
         return projectMapper.toResponse(project);
     }
 
@@ -42,18 +43,18 @@ public class ProjectService {
 
     public ProjectResponse updateProject(Long id, ProjectCreateRequest request) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
+
         projectMapper.updateEntity(project, request);
         project.setUpdatedAt(LocalDate.now());
-        
+
         Project updatedProject = projectRepository.save(project);
         return projectMapper.toResponse(updatedProject);
     }
 
     public void deleteProject(Long id) {
         if (!projectRepository.existsById(id)) {
-            throw new RuntimeException("Proyecto no encontrado");
+            throw new EntityNotFoundException("Proyecto no encontrado");
         }
         projectRepository.deleteById(id);
     }
