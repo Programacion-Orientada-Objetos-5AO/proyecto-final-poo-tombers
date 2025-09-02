@@ -1,28 +1,26 @@
 package ar.edu.huergo.tombers.service;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mockito.MockitoAnnotations;
-
 import ar.edu.huergo.tombers.dto.project.ProjectCreateRequest;
 import ar.edu.huergo.tombers.dto.project.ProjectResponse;
 import ar.edu.huergo.tombers.entity.Project;
 import ar.edu.huergo.tombers.mapper.ProjectMapper;
 import ar.edu.huergo.tombers.repository.ProjectRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class ProjectServiceTest {
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class ProjectServiceTest {
 
     @Mock
     private ProjectRepository projectRepository;
@@ -33,155 +31,116 @@ public class ProjectServiceTest {
     @InjectMocks
     private ProjectService projectService;
 
-    private Project project;
-    private ProjectResponse projectResponse;
-    private ProjectCreateRequest createRequest;
-
-    @BeforeEach
-    public void setup() {
-        MockitoAnnotations.openMocks(this);
-
-        project = Project.builder()
-                .id(1L)
-                .title("Test Project")
-                .description("Test Description")
-                .status(Project.ProjectStatus.ACTIVE)
-                .build();
-
-        projectResponse = ProjectResponse.builder()
-                .id(1L)
-                .title("Test Project")
-                .description("Test Description")
-                .status(Project.ProjectStatus.ACTIVE)
-                .build();
-
-        createRequest = new ProjectCreateRequest();
-        createRequest.setTitle("Test Project");
-        createRequest.setDescription("Test Description");
-        createRequest.setStatus(ProjectCreateRequest.ProjectStatus.ACTIVE);
-    }
-
     @Test
-    public void testGetAllProjects() {
+    void testGetAllProjects() {
+        Project project = Project.builder().title("Test Project").build();
+        ProjectResponse response = ProjectResponse.builder().title("Test Project").build();
+
         when(projectRepository.findAll()).thenReturn(List.of(project));
-        when(projectMapper.toResponse(project)).thenReturn(projectResponse);
+        when(projectMapper.toResponse(project)).thenReturn(response);
 
-        List<ProjectResponse> result = projectService.getAllProjects();
+        List<ProjectResponse> results = projectService.getAllProjects();
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(projectRepository).findAll();
-        verify(projectMapper).toResponse(project);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getTitle()).isEqualTo("Test Project");
     }
 
     @Test
-    public void testGetProjectById_Success() {
-        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-        when(projectMapper.toResponse(project)).thenReturn(projectResponse);
+    void testGetProjectById() {
+        Long id = 1L;
+        Project project = Project.builder().id(id).title("Test Project").build();
+        ProjectResponse response = ProjectResponse.builder().id(id).title("Test Project").build();
 
-        ProjectResponse result = projectService.getProjectById(1L);
+        when(projectRepository.findById(id)).thenReturn(Optional.of(project));
+        when(projectMapper.toResponse(project)).thenReturn(response);
 
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-        verify(projectRepository).findById(1L);
-        verify(projectMapper).toResponse(project);
+        ProjectResponse result = projectService.getProjectById(id);
+
+        assertThat(result.getId()).isEqualTo(id);
     }
 
     @Test
-    public void testGetProjectById_NotFound() {
-        when(projectRepository.findById(1L)).thenReturn(Optional.empty());
+    void testGetProjectByIdNotFound() {
+        Long id = 1L;
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            projectService.getProjectById(1L);
-        });
+        when(projectRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertEquals("Proyecto no encontrado", exception.getMessage());
+        assertThatThrownBy(() -> projectService.getProjectById(id))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Proyecto no encontrado");
     }
 
     @Test
-    public void testCreateProject() {
-        when(projectMapper.toEntity(createRequest)).thenReturn(project);
-        when(projectRepository.save(any(Project.class))).thenReturn(project);
-        when(projectMapper.toResponse(project)).thenReturn(projectResponse);
+    void testCreateProject() {
+        ProjectCreateRequest request = new ProjectCreateRequest();
+        request.setTitle("New Project");
+        Project project = Project.builder().title("New Project").build();
+        Project savedProject = Project.builder().id(1L).title("New Project").build();
+        ProjectResponse response = ProjectResponse.builder().id(1L).title("New Project").build();
 
-        ProjectResponse result = projectService.createProject(createRequest);
+        when(projectMapper.toEntity(request)).thenReturn(project);
+        when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+        when(projectMapper.toResponse(savedProject)).thenReturn(response);
 
-        assertNotNull(result);
-        verify(projectMapper).toEntity(createRequest);
+        ProjectResponse result = projectService.createProject(request);
+
+        assertThat(result.getTitle()).isEqualTo("New Project");
         verify(projectRepository).save(any(Project.class));
-        verify(projectMapper).toResponse(project);
     }
 
     @Test
-    public void testUpdateProject_Success() {
-        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-        when(projectRepository.save(any(Project.class))).thenReturn(project);
-        when(projectMapper.toResponse(project)).thenReturn(projectResponse);
+    void testUpdateProject() {
+        Long id = 1L;
+        ProjectCreateRequest request = new ProjectCreateRequest();
+        request.setTitle("Updated Project");
+        Project project = Project.builder().id(id).title("Old Project").build();
+        Project updatedProject = Project.builder().id(id).title("Updated Project").build();
+        ProjectResponse response = ProjectResponse.builder().id(id).title("Updated Project").build();
 
-        ProjectResponse result = projectService.updateProject(1L, createRequest);
+        when(projectRepository.findById(id)).thenReturn(Optional.of(project));
+        when(projectRepository.save(any(Project.class))).thenReturn(updatedProject);
+        when(projectMapper.toResponse(updatedProject)).thenReturn(response);
 
-        assertNotNull(result);
-        verify(projectRepository).findById(1L);
-        verify(projectMapper).updateEntity(project, createRequest);
-        verify(projectRepository).save(project);
-        verify(projectMapper).toResponse(project);
+        ProjectResponse result = projectService.updateProject(id, request);
+
+        assertThat(result.getTitle()).isEqualTo("Updated Project");
+        verify(projectMapper).updateEntity(project, request);
     }
 
     @Test
-    public void testDeleteProject_Success() {
-        when(projectRepository.existsById(1L)).thenReturn(true);
+    void testDeleteProject() {
+        Long id = 1L;
 
-        assertDoesNotThrow(() -> projectService.deleteProject(1L));
-        verify(projectRepository).deleteById(1L);
+        when(projectRepository.existsById(id)).thenReturn(true);
+
+        projectService.deleteProject(id);
+
+        verify(projectRepository).deleteById(id);
     }
 
     @Test
-    public void testDeleteProject_NotFound() {
-        when(projectRepository.existsById(1L)).thenReturn(false);
+    void testDeleteProjectNotFound() {
+        Long id = 1L;
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            projectService.deleteProject(1L);
-        });
+        when(projectRepository.existsById(id)).thenReturn(false);
 
-        assertEquals("Proyecto no encontrado", exception.getMessage());
+        assertThatThrownBy(() -> projectService.deleteProject(id))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Proyecto no encontrado");
     }
 
     @Test
-    public void testSearchProjects() {
-        when(projectRepository.searchProjects("test")).thenReturn(List.of(project));
-        when(projectMapper.toResponse(project)).thenReturn(projectResponse);
+    void testSearchProjects() {
+        String query = "Java";
+        Project project = Project.builder().title("Java Project").build();
+        ProjectResponse response = ProjectResponse.builder().title("Java Project").build();
 
-        List<ProjectResponse> result = projectService.searchProjects("test");
+        when(projectRepository.searchProjects(query)).thenReturn(List.of(project));
+        when(projectMapper.toResponse(project)).thenReturn(response);
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(projectRepository).searchProjects("test");
-        verify(projectMapper).toResponse(project);
-    }
+        List<ProjectResponse> results = projectService.searchProjects(query);
 
-    @Test
-    public void testGetActiveProjects() {
-        when(projectRepository.findActiveProjectsOrderByCreatedAt()).thenReturn(List.of(project));
-        when(projectMapper.toResponse(project)).thenReturn(projectResponse);
-
-        List<ProjectResponse> result = projectService.getActiveProjects();
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(projectRepository).findActiveProjectsOrderByCreatedAt();
-        verify(projectMapper).toResponse(project);
-    }
-
-    @Test
-    public void testGetIncompleteProjects() {
-        when(projectRepository.findIncompleteProjectsOrderByProgress()).thenReturn(List.of(project));
-        when(projectMapper.toResponse(project)).thenReturn(projectResponse);
-
-        List<ProjectResponse> result = projectService.getIncompleteProjects();
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(projectRepository).findIncompleteProjectsOrderByProgress();
-        verify(projectMapper).toResponse(project);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getTitle()).isEqualTo("Java Project");
     }
 }

@@ -1,28 +1,27 @@
 package ar.edu.huergo.tombers.service;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mockito.MockitoAnnotations;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
 import ar.edu.huergo.tombers.dto.user.UserResponse;
 import ar.edu.huergo.tombers.dto.user.UserUpdateRequest;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.mapper.UserMapper;
 import ar.edu.huergo.tombers.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class UserServiceTest {
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -33,98 +32,78 @@ public class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
-    private User user;
-    private UserResponse userResponse;
-    private UserUpdateRequest updateRequest;
-
-    @BeforeEach
-    public void setup() {
-        MockitoAnnotations.openMocks(this);
-
-        user = User.builder()
-                .id(1L)
-                .email("test@example.com")
-                .username("testuser")
-                .firstName("Test")
-                .lastName("User")
-                .build();
-
-        userResponse = UserResponse.builder()
-                .id(1L)
-                .email("test@example.com")
-                .username("testuser")
-                .firstName("Test")
-                .lastName("User")
-                .build();
-
-        updateRequest = UserUpdateRequest.builder()
-                .firstName("Updated")
-                .lastName("User")
-                .build();
-    }
-
     @Test
-    public void testGetUserProfile_Success() {
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
-        when(userMapper.toDto(user)).thenReturn(userResponse);
+    void testGetUserProfile() {
+        String email = "test@example.com";
+        User user = User.builder().email(email).build();
+        UserResponse response = UserResponse.builder().email(email).build();
 
-        UserResponse result = userService.getUserProfile("test@example.com");
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userMapper.toDto(user)).thenReturn(response);
 
-        assertNotNull(result);
-        assertEquals("test@example.com", result.getEmail());
-        verify(userRepository).findByEmail("test@example.com");
+        UserResponse result = userService.getUserProfile(email);
+
+        assertThat(result.getEmail()).isEqualTo(email);
+        verify(userRepository).findByEmail(email);
         verify(userMapper).toDto(user);
     }
 
     @Test
-    public void testGetUserProfile_UserNotFound() {
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.empty());
+    void testGetUserProfileNotFound() {
+        String email = "notfound@example.com";
 
-        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () -> {
-            userService.getUserProfile("test@example.com");
-        });
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        assertEquals("Usuario no encontrado", exception.getMessage());
+        assertThatThrownBy(() -> userService.getUserProfile(email))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Usuario no encontrado: " + email);
     }
 
     @Test
-    public void testUpdateUserProfile_Success() {
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
-        when(userRepository.save(any(User.class))).thenReturn(user);
-        when(userMapper.toDto(user)).thenReturn(userResponse);
+    void testUpdateUserProfile() {
+        String email = "test@example.com";
+        User user = User.builder().email(email).build();
+        UserUpdateRequest request = UserUpdateRequest.builder().firstName("Updated").build();
+        User updatedUser = User.builder().email(email).firstName("Updated").build();
+        UserResponse response = UserResponse.builder().email(email).firstName("Updated").build();
 
-        UserResponse result = userService.updateUserProfile("test@example.com", updateRequest);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(updatedUser);
+        when(userMapper.toDto(updatedUser)).thenReturn(response);
 
-        assertNotNull(result);
-        verify(userRepository).findByEmail("test@example.com");
-        verify(userMapper).updateEntity(user, updateRequest);
+        UserResponse result = userService.updateUserProfile(email, request);
+
+        assertThat(result.getFirstName()).isEqualTo("Updated");
+        verify(userMapper).updateEntity(user, request);
         verify(userRepository).save(user);
-        verify(userMapper).toDto(user);
     }
 
     @Test
-    public void testSearchUsers() {
-        when(userRepository.searchUsers("test")).thenReturn(List.of(user));
-        when(userMapper.toDto(user)).thenReturn(userResponse);
+    void testSearchUsers() {
+        String query = "Developer";
+        User user = User.builder().email("dev@example.com").build();
+        UserResponse response = UserResponse.builder().email("dev@example.com").build();
 
-        List<UserResponse> result = userService.searchUsers("test");
+        when(userRepository.searchUsers(query)).thenReturn(List.of(user));
+        when(userMapper.toDto(user)).thenReturn(response);
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(userRepository).searchUsers("test");
-        verify(userMapper).toDto(user);
+        List<UserResponse> results = userService.searchUsers(query);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getEmail()).isEqualTo("dev@example.com");
     }
 
     @Test
-    public void testGetAvailableUsers() {
+    void testGetAvailableUsers() {
+        User user = User.builder().email("available@example.com").status(User.UserStatus.DISPONIBLE).build();
+        UserResponse response = UserResponse.builder().email("available@example.com").build();
+
         when(userRepository.findAvailableUsers()).thenReturn(List.of(user));
-        when(userMapper.toDto(user)).thenReturn(userResponse);
+        when(userMapper.toDto(user)).thenReturn(response);
 
-        List<UserResponse> result = userService.getAvailableUsers();
+        List<UserResponse> results = userService.getAvailableUsers();
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(userRepository).findAvailableUsers();
-        verify(userMapper).toDto(user);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getEmail()).isEqualTo("available@example.com");
     }
 }

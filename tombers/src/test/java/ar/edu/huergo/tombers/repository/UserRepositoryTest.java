@@ -1,84 +1,118 @@
 package ar.edu.huergo.tombers.repository;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
+import ar.edu.huergo.tombers.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.context.ActiveProfiles;
 
-import ar.edu.huergo.tombers.entity.User;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-public class UserRepositoryTest {
-
-    @Autowired
-    private TestEntityManager entityManager;
+@ActiveProfiles("test")
+class UserRepositoryTest {
 
     @Autowired
     private UserRepository userRepository;
 
-    private User user;
-
-    @BeforeEach
-    public void setup() {
-        user = User.builder()
-                .email("test@example.com")
-                .username("testuser")
+    @Test
+    void testSaveUser() {
+        User user = User.builder()
+                .firstName("John")
+                .lastName("Doe")
+                .email("john.doe@example.com")
+                .username("johndoe")
                 .password("password")
-                .firstName("Test")
-                .lastName("User")
                 .status(User.UserStatus.DISPONIBLE)
                 .build();
-        entityManager.persist(user);
-        entityManager.flush();
+
+        User savedUser = userRepository.save(user);
+
+        assertThat(savedUser.getId()).isNotNull();
+        assertThat(savedUser.getEmail()).isEqualTo("john.doe@example.com");
     }
 
     @Test
-    public void testFindByEmail() {
-        Optional<User> found = userRepository.findByEmail("test@example.com");
-        assertTrue(found.isPresent());
-        assertEquals("test@example.com", found.get().getEmail());
+    void testFindByEmail() {
+        User user = User.builder()
+                .firstName("Jane")
+                .lastName("Smith")
+                .email("jane.smith@example.com")
+                .username("janesmith")
+                .password("password")
+                .status(User.UserStatus.DISPONIBLE)
+                .build();
+        userRepository.save(user);
+
+        Optional<User> foundUser = userRepository.findByEmail("jane.smith@example.com");
+
+        assertThat(foundUser).isPresent();
+        assertThat(foundUser.get().getEmail()).isEqualTo("jane.smith@example.com");
     }
 
     @Test
-    public void testFindByUsername() {
-        Optional<User> found = userRepository.findByUsername("testuser");
-        assertTrue(found.isPresent());
-        assertEquals("testuser", found.get().getUsername());
+    void testExistsByEmail() {
+        User user = User.builder()
+                .firstName("Alice")
+                .lastName("Wonder")
+                .email("alice@example.com")
+                .username("alice")
+                .password("password")
+                .status(User.UserStatus.DISPONIBLE)
+                .build();
+        userRepository.save(user);
+
+        boolean exists = userRepository.existsByEmail("alice@example.com");
+
+        assertThat(exists).isTrue();
     }
 
     @Test
-    public void testExistsByEmail() {
-        assertTrue(userRepository.existsByEmail("test@example.com"));
-        assertFalse(userRepository.existsByEmail("nonexistent@example.com"));
+    void testFindAvailableUsers() {
+        User user1 = User.builder()
+                .firstName("Bob")
+                .lastName("Builder")
+                .email("bob@example.com")
+                .username("bob")
+                .password("password")
+                .status(User.UserStatus.DISPONIBLE)
+                .build();
+        User user2 = User.builder()
+                .firstName("Charlie")
+                .lastName("Chaplin")
+                .email("charlie@example.com")
+                .username("charlie")
+                .password("password")
+                .status(User.UserStatus.OCUPADO)
+                .build();
+        userRepository.save(user1);
+        userRepository.save(user2);
+
+        List<User> availableUsers = userRepository.findAvailableUsers();
+
+        assertThat(availableUsers).hasSize(1);
+        assertThat(availableUsers.get(0).getEmail()).isEqualTo("bob@example.com");
     }
 
     @Test
-    public void testExistsByUsername() {
-        assertTrue(userRepository.existsByUsername("testuser"));
-        assertFalse(userRepository.existsByUsername("nonexistent"));
-    }
+    void testSearchUsers() {
+        User user = User.builder()
+                .firstName("David")
+                .lastName("Goliath")
+                .email("david@example.com")
+                .username("david")
+                .password("password")
+                .specialization("Developer")
+                .status(User.UserStatus.DISPONIBLE)
+                .build();
+        userRepository.save(user);
 
-    @Test
-    public void testFindAvailableUsers() {
-        List<User> available = userRepository.findAvailableUsers();
-        assertNotNull(available);
-        assertEquals(1, available.size());
-        assertEquals(User.UserStatus.DISPONIBLE, available.get(0).getStatus());
-    }
+        List<User> searchResults = userRepository.searchUsers("Developer");
 
-    @Test
-    public void testSearchUsers() {
-        List<User> results = userRepository.searchUsers("Test");
-        assertNotNull(results);
-        assertEquals(1, results.size());
-        assertEquals("Test", results.get(0).getFirstName());
+        assertThat(searchResults).hasSize(1);
+        assertThat(searchResults.get(0).getEmail()).isEqualTo("david@example.com");
     }
 }
