@@ -3,15 +3,18 @@ package ar.edu.huergo.tombers.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import ar.edu.huergo.tombers.dto.user.CreateProfileRequest;
 import ar.edu.huergo.tombers.dto.user.UserResponse;
 import ar.edu.huergo.tombers.dto.user.UserUpdateRequest;
 import ar.edu.huergo.tombers.service.UserService;
@@ -52,6 +55,14 @@ public class UserController {
     public ResponseEntity<List<UserResponse>> getAvailableUsers() {
         List<UserResponse> users = userService.getAvailableUsers();
         return ResponseEntity.ok(users);
+    }
+
+    // Logica para crear perfil y asignarle un rol (Solo accesible por admin)
+    @PostMapping("/CreateProfile")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> createProfile(@Valid @RequestBody CreateProfileRequest request) {
+        UserResponse response = userService.createProfile(request.getEmail(), request.getUsername(), request.getRole());
+        return ResponseEntity.ok(response);
     }
 }
 

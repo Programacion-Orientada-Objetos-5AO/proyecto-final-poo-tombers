@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/projects/**").hasRole("ADMIN")
                 .requestMatchers("/projects/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/users/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/users/CreateProfile").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

@@ -11,6 +11,7 @@ import ar.edu.huergo.tombers.entity.User;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface UserMapper {
 
+    @Mapping(target = "username", source = "usernameField")
     UserResponse toDto(User user);
 
     @Mapping(target = "id", ignore = true)
