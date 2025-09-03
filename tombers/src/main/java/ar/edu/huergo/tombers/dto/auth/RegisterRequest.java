@@ -2,10 +2,8 @@ package ar.edu.huergo.tombers.dto.auth;
 
 import java.util.List;
 
-import ar.edu.huergo.tombers.entity.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -53,8 +51,7 @@ public class RegisterRequest {
     private List<String> certifications;
     private List<String> interests;
 
-    @NotNull(message = "El rol es requerido")
-    private Role role;
+
 }
 
 

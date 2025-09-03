@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import ar.edu.huergo.tombers.dto.auth.AuthResponse;
 import ar.edu.huergo.tombers.dto.auth.LoginRequest;
 import ar.edu.huergo.tombers.dto.auth.RegisterRequest;
+import ar.edu.huergo.tombers.entity.Role;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.repository.UserRepository;
 import ar.edu.huergo.tombers.security.JwtService;
@@ -58,7 +59,7 @@ public class AuthService {
                 .status(User.UserStatus.DISPONIBLE)
                 .certifications(request.getCertifications() != null ? request.getCertifications() : List.of())
                 .interests(request.getInterests() != null ? request.getInterests() : List.of())
-                .roles(Set.of(request.getRole()))
+                .roles(Set.of(Role.USER))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
