@@ -2,6 +2,7 @@ package ar.edu.huergo.tombers.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -57,6 +58,7 @@ public class AuthService {
                 .status(User.UserStatus.DISPONIBLE)
                 .certifications(request.getCertifications() != null ? request.getCertifications() : List.of())
                 .interests(request.getInterests() != null ? request.getInterests() : List.of())
+                .roles(Set.of(request.getRole()))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();

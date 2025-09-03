@@ -1,10 +1,11 @@
 package ar.edu.huergo.tombers.config;
 
-import ar.edu.huergo.tombers.security.JwtAuthenticationFilter;
-import ar.edu.huergo.tombers.security.JwtAuthenticationEntryPoint;
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,8 +18,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
+import ar.edu.huergo.tombers.security.JwtAuthenticationEntryPoint;
+import ar.edu.huergo.tombers.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -40,9 +42,10 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/").permitAll()
-                .requestMatchers("/feed").permitAll()
-                .requestMatchers("/bio").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/projects/**").hasRole("ADMIN")
+                .requestMatchers("/projects/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/users/**").hasAnyRole("USER", "ADMIN")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

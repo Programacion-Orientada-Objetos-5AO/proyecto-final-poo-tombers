@@ -110,6 +110,9 @@ public class GlobalExceptionHandler {
         problem.setDetail("Ha ocurrido un error inesperado");
         problem.setType(URI.create("https://http.dev/problems/internal-error"));
         log.error("Error no controlado", ex);
+        // agregar que indique la excepcion que salto
+        problem.setProperty("exception", ex.getClass().getName());
+
         return problem;
     }
 
@@ -143,6 +146,50 @@ public class GlobalExceptionHandler {
         problem.setDetail("Error interno en el proceso de autenticación");
         problem.setType(URI.create("https://http.dev/problems/unauthorized"));
         log.error("Error interno de autenticación", ex);
+        return problem;
+    }
+
+    // Agregar controlador para JWT expirado
+    @ExceptionHandler(io.jsonwebtoken.ExpiredJwtException.class)
+    public ProblemDetail handleExpiredJwtException(io.jsonwebtoken.ExpiredJwtException ex) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        problem.setTitle("Token expirado");
+        problem.setDetail("El token JWT ha expirado. Por favor, inicie sesión nuevamente.");
+        problem.setType(URI.create("https://http.dev/problems/token-expired"));
+        log.warn("Token JWT expirado: {}", ex.getMessage());
+        return problem;
+    }
+
+    // Agregar controlador para JWT malformado
+    @ExceptionHandler(io.jsonwebtoken.MalformedJwtException.class)
+    public ProblemDetail handleMalformedJwtException(io.jsonwebtoken.MalformedJwtException ex) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        problem.setTitle("Token inválido");
+        problem.setDetail("El token JWT está malformado o corrupto.");
+        problem.setType(URI.create("https://http.dev/problems/invalid-token"));
+        log.warn("Token JWT malformado: {}", ex.getMessage());
+        return problem;
+    }
+
+    // Agregar controlador para firma JWT inválida
+    @ExceptionHandler(io.jsonwebtoken.security.SignatureException.class)
+    public ProblemDetail handleSignatureException(io.jsonwebtoken.security.SignatureException ex) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        problem.setTitle("Token inválido");
+        problem.setDetail("La firma del token JWT es inválida.");
+        problem.setType(URI.create("https://http.dev/problems/invalid-token"));
+        log.warn("Firma JWT inválida: {}", ex.getMessage());
+        return problem;
+    }
+
+    // Agregar controlador para otras excepciones JWT
+    @ExceptionHandler(io.jsonwebtoken.JwtException.class)
+    public ProblemDetail handleJwtException(io.jsonwebtoken.JwtException ex) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        problem.setTitle("Error de token");
+        problem.setDetail("Error relacionado con el token JWT.");
+        problem.setType(URI.create("https://http.dev/problems/token-error"));
+        log.warn("Error JWT: {}", ex.getMessage());
         return problem;
     }
 }

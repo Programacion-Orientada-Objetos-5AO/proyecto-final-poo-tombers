@@ -45,7 +45,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
+        try {
+            userEmail = jwtService.extractUsername(jwt);
+        } catch (Exception e) {
+            // Error al extraer username del JWT - return 401
+            ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+            problem.setTitle("Error de autenticación");
+            problem.setDetail(e.getMessage());
+            problem.setType(URI.create("https://http.dev/problems/unauthorized"));
+
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+            response.getWriter().write(new ObjectMapper().writeValueAsString(problem));
+            return;
+        }
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
@@ -75,7 +88,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Otros errores de autentificacion - return 401
                 ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
                 problem.setTitle("Error de autenticación");
-                problem.setDetail("Token inválido o expirado");
+                problem.setDetail(e.getMessage());
                 problem.setType(URI.create("https://http.dev/problems/unauthorized"));
 
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
