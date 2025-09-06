@@ -2,6 +2,7 @@ package ar.edu.huergo.tombers.dto.auth;
 
 import java.util.List;
 
+import ar.edu.huergo.tombers.util.ValidarPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -35,7 +36,8 @@ public class RegisterRequest {
     private String username;
 
     @NotBlank(message = "La contraseña es requerida")
-    @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
+    @ValidarPassword
+
     private String password;
 
     private List<String> skills;
