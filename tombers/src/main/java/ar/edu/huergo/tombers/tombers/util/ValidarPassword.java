@@ -1,4 +1,4 @@
-package ar.edu.huergo.tombers.util;
+package ar.edu.huergo.tombers.tombers.util;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

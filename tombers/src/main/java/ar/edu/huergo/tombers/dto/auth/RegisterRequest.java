@@ -2,7 +2,7 @@ package ar.edu.huergo.tombers.dto.auth;
 
 import java.util.List;
 
-import ar.edu.huergo.tombers.util.ValidarPassword;
+import ar.edu.huergo.tombers.tombers.util.ValidarPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
