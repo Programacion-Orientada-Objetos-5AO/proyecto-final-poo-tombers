@@ -11,6 +11,10 @@ import ar.edu.huergo.tombers.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Componente para inicializar datos en la base de datos al iniciar la aplicación.
+ * Crea un usuario administrador por defecto si no existe.
+ */
 @Component
 @RequiredArgsConstructor
 public class DataInitializer {
@@ -18,6 +22,10 @@ public class DataInitializer {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * Método ejecutado después de la construcción del bean para inicializar datos.
+     * Crea un usuario administrador con credenciales predeterminadas si no existe.
+     */
     @PostConstruct
     public void init() {
         if (!userRepository.existsByEmail("admin@tombers.com")) {

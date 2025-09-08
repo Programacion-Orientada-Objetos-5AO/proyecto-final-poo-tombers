@@ -36,6 +36,11 @@ import lombok.extern.slf4j.Slf4j;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Maneja excepciones de validación de argumentos de método.
+     * @param ex La excepción MethodArgumentNotValidException lanzada.
+     * @return Un ProblemDetail con detalles de los errores de validación.
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
@@ -51,6 +56,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    /**
+     * Maneja excepciones de violación de restricciones.
+     * @param ex La excepción ConstraintViolationException lanzada.
+     * @return Un ProblemDetail con detalles de la violación.
+     */
     @ExceptionHandler(ConstraintViolationException.class)
     public ProblemDetail handleConstraintViolation(ConstraintViolationException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
@@ -61,6 +71,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    /**
+     * Maneja excepciones cuando una entidad no es encontrada.
+     * @param ex La excepción EntityNotFoundException lanzada.
+     * @return Un ProblemDetail indicando que el recurso no fue encontrado.
+     */
     @ExceptionHandler(EntityNotFoundException.class)
     public ProblemDetail handleEntityNotFound(EntityNotFoundException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
@@ -71,6 +86,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    /**
+     * Maneja excepciones cuando un recurso no es encontrado.
+     * @param ex La excepción NoResourceFoundException lanzada.
+     * @return Un ProblemDetail indicando que el recurso no fue encontrado.
+     */
     @ExceptionHandler(NoResourceFoundException.class)
     public ProblemDetail handleNoResourceFoundException(NoResourceFoundException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
@@ -81,7 +101,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-
+    /**
+     * Maneja excepciones cuando el método HTTP no está soportado.
+     * @param ex La excepción HttpRequestMethodNotSupportedException lanzada.
+     * @return Un ProblemDetail indicando que el método no está permitido.
+     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ProblemDetail handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.METHOD_NOT_ALLOWED);
@@ -94,6 +118,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    /**
+     * Maneja excepciones de argumentos inválidos.
+     * @param ex La excepción IllegalArgumentException lanzada.
+     * @return Un ProblemDetail indicando argumento inválido.
+     */
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgumentException(IllegalArgumentException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
@@ -103,6 +132,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    /**
+     * Maneja excepciones genéricas no controladas.
+     * @param ex La excepción Exception lanzada.
+     * @return Un ProblemDetail indicando error interno del servidor.
+     */
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneric(Exception ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -116,7 +150,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-    // Agregar controlador para error de bad credentials
+    /**
+     * Maneja excepciones de credenciales inválidas.
+     * @param ex La excepción BadCredentialsException lanzada.
+     * @return Un ProblemDetail indicando credenciales inválidas.
+     */
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
     public ProblemDetail handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
@@ -127,7 +165,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-    // Agregar controlador para error de servicio de autenticación interno
+    /**
+     * Maneja excepciones de servicio de autenticación interno.
+     * @param ex La excepción InternalAuthenticationServiceException lanzada.
+     * @return Un ProblemDetail con detalles del error de autenticación.
+     */
     @ExceptionHandler(org.springframework.security.authentication.InternalAuthenticationServiceException.class)
     public ProblemDetail handleInternalAuthenticationServiceException(org.springframework.security.authentication.InternalAuthenticationServiceException ex) {
         // Verificar si la causa es EntityNotFoundException (usuario no encontrado)
@@ -149,7 +191,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-    // Agregar controlador para JWT expirado
+    /**
+     * Maneja excepciones de JWT expirado.
+     * @param ex La excepción ExpiredJwtException lanzada.
+     * @return Un ProblemDetail indicando token expirado.
+     */
     @ExceptionHandler(io.jsonwebtoken.ExpiredJwtException.class)
     public ProblemDetail handleExpiredJwtException(io.jsonwebtoken.ExpiredJwtException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
@@ -160,7 +206,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-    // Agregar controlador para JWT malformado
+    /**
+     * Maneja excepciones de JWT malformado.
+     * @param ex La excepción MalformedJwtException lanzada.
+     * @return Un ProblemDetail indicando token inválido.
+     */
     @ExceptionHandler(io.jsonwebtoken.MalformedJwtException.class)
     public ProblemDetail handleMalformedJwtException(io.jsonwebtoken.MalformedJwtException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
@@ -171,7 +221,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-    // Agregar controlador para firma JWT inválida
+    /**
+     * Maneja excepciones de firma JWT inválida.
+     * @param ex La excepción SignatureException lanzada.
+     * @return Un ProblemDetail indicando token inválido.
+     */
     @ExceptionHandler(io.jsonwebtoken.security.SignatureException.class)
     public ProblemDetail handleSignatureException(io.jsonwebtoken.security.SignatureException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
@@ -182,7 +236,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-    // Agregar controlador para otras excepciones JWT
+    /**
+     * Maneja otras excepciones relacionadas con JWT.
+     * @param ex La excepción JwtException lanzada.
+     * @return Un ProblemDetail indicando error de token.
+     */
     @ExceptionHandler(io.jsonwebtoken.JwtException.class)
     public ProblemDetail handleJwtException(io.jsonwebtoken.JwtException ex) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);

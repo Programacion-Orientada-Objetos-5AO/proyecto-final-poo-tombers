@@ -21,12 +21,27 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
+    /**
+     * Obtiene el perfil de un usuario por su email.
+     *
+     * @param email el email del usuario
+     * @return un objeto UserResponse que representa el perfil del usuario
+     * @throws EntityNotFoundException si el usuario no existe
+     */
     public UserResponse getUserProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + email));
         return userMapper.toDto(user);
     }
 
+    /**
+     * Actualiza el perfil de un usuario con la información proporcionada.
+     *
+     * @param email el email del usuario
+     * @param request la solicitud de actualización del perfil
+     * @return un objeto UserResponse que representa el perfil actualizado
+     * @throws EntityNotFoundException si el usuario no existe
+     */
     public UserResponse updateUserProfile(String email, UserUpdateRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + email));
@@ -37,6 +52,12 @@ public class UserService {
         return userMapper.toDto(updatedUser);
     }
 
+    /**
+     * Busca usuarios que coincidan con la consulta proporcionada.
+     *
+     * @param query la cadena de búsqueda
+     * @return una lista de objetos UserResponse que representan los usuarios encontrados
+     */
     public List<UserResponse> searchUsers(String query) {
         List<User> users = userRepository.searchUsers(query);
         return users.stream()
@@ -44,6 +65,11 @@ public class UserService {
                 .toList();
     }
 
+    /**
+     * Obtiene una lista de usuarios disponibles.
+     *
+     * @return una lista de objetos UserResponse que representan los usuarios disponibles
+     */
     public List<UserResponse> getAvailableUsers() {
         List<User> users = userRepository.findAvailableUsers();
         return users.stream()
@@ -51,7 +77,15 @@ public class UserService {
                 .toList();
     }
 
-    // Crear perfil y asignarle un rol
+    /**
+     * Crea un perfil de usuario y le asigna un rol.
+     *
+     * @param email el email del usuario
+     * @param username el nombre de usuario
+     * @param role el rol a asignar
+     * @return un objeto UserResponse que representa el perfil creado
+     * @throws IllegalArgumentException si el usuario ya existe o el rol es inválido
+     */
     public UserResponse createProfile(String email, String username, String role) {
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Usuario ya existe con ese email: " + email);

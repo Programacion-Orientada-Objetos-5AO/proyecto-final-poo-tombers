@@ -21,6 +21,10 @@ import ar.edu.huergo.tombers.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Controlador REST para la gestión de proyectos.
+ * Proporciona endpoints para CRUD y búsquedas de proyectos.
+ */
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
@@ -29,24 +33,44 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
+    /**
+     * Obtiene la lista completa de proyectos.
+     * @return Lista de proyectos en la respuesta HTTP.
+     */
     @GetMapping
     public ResponseEntity<List<ProjectResponse>> getAllProjects() {
         List<ProjectResponse> projects = projectService.getAllProjects();
         return ResponseEntity.ok(projects);
     }
 
+    /**
+     * Obtiene un proyecto por su ID.
+     * @param id Identificador del proyecto.
+     * @return Proyecto encontrado en la respuesta HTTP.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ProjectResponse> getProjectById(@PathVariable Long id) {
         ProjectResponse project = projectService.getProjectById(id);
         return ResponseEntity.ok(project);
     }
 
+    /**
+     * Crea un nuevo proyecto.
+     * @param request Datos para crear el proyecto.
+     * @return Proyecto creado en la respuesta HTTP con código 201.
+     */
     @PostMapping
     public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody ProjectCreateRequest request) {
         ProjectResponse project = projectService.createProject(request);
         return ResponseEntity.status(201).body(project);
     }
 
+    /**
+     * Actualiza un proyecto existente.
+     * @param id Identificador del proyecto a actualizar.
+     * @param request Datos actualizados del proyecto.
+     * @return Proyecto actualizado en la respuesta HTTP.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<ProjectResponse> updateProject(
             @PathVariable Long id,
@@ -55,6 +79,11 @@ public class ProjectController {
         return ResponseEntity.ok(project);
     }
 
+    /**
+     * Elimina un proyecto por su ID.
+     * @param id Identificador del proyecto a eliminar.
+     * @return Mensaje de confirmación en la respuesta HTTP.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteProject(@PathVariable Long id) {
         projectService.deleteProject(id);
@@ -62,23 +91,34 @@ public class ProjectController {
         return ResponseEntity.ok(Map.of("message", "Proyecto eliminado correctamente"));
     }
 
+    /**
+     * Busca proyectos que coincidan con un término de búsqueda.
+     * @param q Término de búsqueda.
+     * @return Lista de proyectos que coinciden con la búsqueda.
+     */
     @GetMapping("/search")
     public ResponseEntity<List<ProjectResponse>> searchProjects(@RequestParam String q) {
         List<ProjectResponse> projects = projectService.searchProjects(q);
         return ResponseEntity.ok(projects);
     }
 
+    /**
+     * Obtiene proyectos activos.
+     * @return Lista de proyectos activos.
+     */
     @GetMapping("/active")
     public ResponseEntity<List<ProjectResponse>> getActiveProjects() {
         List<ProjectResponse> projects = projectService.getActiveProjects();
         return ResponseEntity.ok(projects);
     }
 
+    /**
+     * Obtiene proyectos incompletos.
+     * @return Lista de proyectos incompletos.
+     */
     @GetMapping("/incomplete")
     public ResponseEntity<List<ProjectResponse>> getIncompleteProjects() {
         List<ProjectResponse> projects = projectService.getIncompleteProjects();
         return ResponseEntity.ok(projects);
     }
 }
-
-

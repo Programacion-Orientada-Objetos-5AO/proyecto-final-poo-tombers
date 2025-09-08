@@ -28,6 +28,13 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
+    /**
+     * Registra un nuevo usuario en el sistema.
+     *
+     * @param request la solicitud de registro con los datos del usuario
+     * @return un objeto AuthResponse con el token JWT y la información del usuario registrado
+     * @throws IllegalArgumentException si el email o username ya están en uso
+     */
     public AuthResponse register(RegisterRequest request) {
         // Verificar si el email ya existe
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -82,6 +89,13 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * Inicia sesión de un usuario y genera un token JWT.
+     *
+     * @param request la solicitud de inicio de sesión con email y contraseña
+     * @return un objeto AuthResponse con el token JWT y la información del usuario
+     * @throws EntityNotFoundException si el usuario no existe
+     */
     public AuthResponse login(LoginRequest request) {
         // Autenticar usuario
         authenticationManager.authenticate(
