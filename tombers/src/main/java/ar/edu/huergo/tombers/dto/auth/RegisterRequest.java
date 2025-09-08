@@ -2,7 +2,6 @@ package ar.edu.huergo.tombers.dto.auth;
 
 import java.util.List;
 
-import ar.edu.huergo.tombers.tombers.util.ValidarPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -36,9 +35,9 @@ public class RegisterRequest {
     private String username;
 
     @NotBlank(message = "La contraseña es requerida")
-    @ValidarPassword
-
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{16,}$", message = "La contraseña debe tener al menos 16 caracteres, una mayúscula, una minúscula, un número y un carácter especial")
     private String password;
+    
 
     private List<String> skills;
     private Integer age;
