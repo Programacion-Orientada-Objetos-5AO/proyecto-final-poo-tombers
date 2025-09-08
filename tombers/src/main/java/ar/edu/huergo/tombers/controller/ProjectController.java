@@ -1,6 +1,7 @@
 package ar.edu.huergo.tombers.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -55,10 +56,10 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteProject(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> deleteProject(@PathVariable Long id) {
         projectService.deleteProject(id);
 
-        return ResponseEntity.ok("Proyecto eliminado correctamente");
+        return ResponseEntity.ok(Map.of("message", "Proyecto eliminado correctamente"));
     }
 
     @GetMapping("/search")
