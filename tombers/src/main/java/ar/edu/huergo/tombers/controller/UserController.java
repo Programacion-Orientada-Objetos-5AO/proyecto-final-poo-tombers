@@ -21,6 +21,10 @@ import ar.edu.huergo.tombers.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Controlador REST para la gestión de usuarios.
+ * Proporciona endpoints para obtener y actualizar perfiles, búsqueda y creación de perfiles.
+ */
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -29,6 +33,11 @@ public class UserController {
 
     private final UserService userService;
 
+    /**
+     * Obtiene el perfil del usuario autenticado.
+     * @param authentication Información de autenticación del usuario.
+     * @return Perfil del usuario en la respuesta HTTP.
+     */
     @GetMapping("/profile")
     public ResponseEntity<UserResponse> getUserProfile(Authentication authentication) {
         String email = authentication.getName();
@@ -36,6 +45,12 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Actualiza el perfil del usuario autenticado.
+     * @param authentication Información de autenticación del usuario.
+     * @param request Datos para actualizar el perfil.
+     * @return Perfil actualizado en la respuesta HTTP.
+     */
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateUserProfile(
             Authentication authentication,
@@ -45,19 +60,33 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Busca usuarios que coincidan con un término de búsqueda.
+     * @param q Término de búsqueda.
+     * @return Lista de usuarios que coinciden con la búsqueda.
+     */
     @GetMapping("/search")
     public ResponseEntity<List<UserResponse>> searchUsers(@RequestParam String q) {
         List<UserResponse> users = userService.searchUsers(q);
         return ResponseEntity.ok(users);
     }
 
+    /**
+     * Obtiene usuarios disponibles.
+     * @return Lista de usuarios disponibles.
+     */
     @GetMapping("/available")
     public ResponseEntity<List<UserResponse>> getAvailableUsers() {
         List<UserResponse> users = userService.getAvailableUsers();
         return ResponseEntity.ok(users);
     }
 
-    // Logica para crear perfil y asignarle un rol (Solo accesible por admin)
+    /**
+     * Crea un perfil de usuario y le asigna un rol.
+     * Solo accesible por administradores.
+     * @param request Datos para crear el perfil.
+     * @return Perfil creado en la respuesta HTTP.
+     */
     @PostMapping("/CreateProfile")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> createProfile(@Valid @RequestBody CreateProfileRequest request) {
@@ -65,5 +94,3 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 }
-
-

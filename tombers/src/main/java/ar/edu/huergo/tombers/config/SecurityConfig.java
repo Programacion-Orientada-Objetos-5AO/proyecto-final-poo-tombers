@@ -22,6 +22,10 @@ import ar.edu.huergo.tombers.security.JwtAuthenticationEntryPoint;
 import ar.edu.huergo.tombers.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Configuración de seguridad para la aplicación utilizando Spring Security.
+ * Define la cadena de filtros de seguridad, CORS y autorizaciones de endpoints.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -32,6 +36,14 @@ public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
+    /**
+     * Configura la cadena de filtros de seguridad para la aplicación.
+     * Deshabilita CSRF, configura CORS, define autorizaciones de endpoints,
+     * establece política de sesiones sin estado y agrega filtros JWT.
+     * @param http El objeto HttpSecurity para configurar la seguridad.
+     * @return La SecurityFilterChain configurada.
+     * @throws Exception Si ocurre un error durante la configuración.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -61,6 +73,11 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Configura la fuente de configuración CORS para permitir solicitudes desde cualquier origen.
+     * Permite métodos HTTP comunes y credenciales.
+     * @return Una CorsConfigurationSource configurada.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

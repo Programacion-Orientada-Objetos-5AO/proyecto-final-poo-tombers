@@ -32,6 +32,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Entidad que representa a un usuario en el sistema Tombers.
+ * Implementa UserDetails para la integración con Spring Security.
+ * Contiene información personal, credenciales y roles del usuario.
+ */
 @Entity
 @Table(name = "users")
 @Data
@@ -41,89 +46,169 @@ import lombok.NoArgsConstructor;
 @EntityListeners(AuditingEntityListener.class)
 public class User implements UserDetails {
 
+    /**
+     * Identificador único del usuario.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Nombre del usuario.
+     */
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
+    /**
+     * Apellido del usuario.
+     */
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    /**
+     * Correo electrónico del usuario, único en el sistema.
+     */
     @Column(unique = true, nullable = false)
     private String email;
 
+    /**
+     * Nombre de usuario único.
+     */
     @Column(unique = true, nullable = false)
     private String username;
 
+    /**
+     * Contraseña encriptada del usuario.
+     */
     @Column(nullable = false)
     private String password;
 
+    /**
+     * Lista de habilidades del usuario.
+     */
     @ElementCollection
     @CollectionTable(name = "user_skills", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "skill")
     private List<String> skills;
 
+    /**
+     * Edad del usuario.
+     */
     private Integer age;
 
+    /**
+     * Fecha de nacimiento del usuario.
+     */
     @Column(name = "birth_date")
     private String birthDate;
 
+    /**
+     * Idiomas que habla el usuario.
+     */
     private String languages;
 
+    /**
+     * Especialización del usuario.
+     */
     private String specialization;
 
+    /**
+     * Número de teléfono del usuario.
+     */
     private String phone;
 
+    /**
+     * Enlace a LinkedIn del usuario.
+     */
     private String linkedin;
 
+    /**
+     * Enlace a GitHub del usuario.
+     */
     private String github;
 
+    /**
+     * Enlace al portafolio del usuario.
+     */
     private String portfolio;
 
+    /**
+     * Biografía del usuario.
+     */
     @Column(columnDefinition = "TEXT")
     private String bio;
 
+    /**
+     * Estado actual del usuario.
+     */
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
+    /**
+     * Lista de certificaciones del usuario.
+     */
     @ElementCollection
     @CollectionTable(name = "user_certifications", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "certification")
     private List<String> certifications;
 
+    /**
+     * Lista de intereses del usuario.
+     */
     @ElementCollection
     @CollectionTable(name = "user_interests", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "interest")
     private List<String> interests;
 
+    /**
+     * Conjunto de roles asignados al usuario.
+     */
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     private Set<Role> roles = new HashSet<>();
 
+    /**
+     * Fecha de creación del usuario.
+     */
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Fecha de última actualización del usuario.
+     */
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    /**
+     * Enum que define los posibles estados de un usuario.
+     */
     public enum UserStatus {
         DISPONIBLE, OCUPADO, INACTIVO
     }
 
-    // UserDetails
+    /**
+     * Obtiene el nombre de usuario para autenticación, que es el correo electrónico.
+     * @return El correo electrónico del usuario.
+     */
     @Override
     public String getUsername() {
         return email;
     }
 
+    /**
+     * Obtiene el campo de nombre de usuario (distinto del username para autenticación).
+     * @return El nombre de usuario único.
+     */
     public String getUsernameField() {
         return username;
     }
 
+    /**
+     * Obtiene las autoridades (roles) del usuario para Spring Security.
+     * @return Una colección de GrantedAuthority basada en los roles del usuario.
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream()
@@ -131,21 +216,37 @@ public class User implements UserDetails {
             .collect(Collectors.toList());
     }
 
+    /**
+     * Verifica si la cuenta del usuario no ha expirado.
+     * @return Siempre true, ya que no se implementa expiración de cuentas.
+     */
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
 
+    /**
+     * Verifica si la cuenta del usuario no está bloqueada.
+     * @return Siempre true, ya que no se implementa bloqueo de cuentas.
+     */
     @Override
     public boolean isAccountNonLocked() {
         return true;
     }
 
+    /**
+     * Verifica si las credenciales del usuario no han expirado.
+     * @return Siempre true, ya que no se implementa expiración de credenciales.
+     */
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
+    /**
+     * Verifica si el usuario está habilitado.
+     * @return Siempre true, ya que no se implementa deshabilitación de usuarios.
+     */
     @Override
     public boolean isEnabled() {
         return true;
