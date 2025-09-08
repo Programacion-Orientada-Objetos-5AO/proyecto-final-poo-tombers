@@ -1,14 +1,14 @@
 package ar.edu.huergo.tombers.repository;
 
-import ar.edu.huergo.tombers.entity.Project;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import ar.edu.huergo.tombers.entity.Project;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -85,7 +85,7 @@ class ProjectRepositoryTest {
         List<Project> activeProjects = projectRepository.findActiveProjectsOrderByCreatedAt();
 
         assertThat(activeProjects).hasSize(2);
-        // Assuming order by createdAt desc, but since same time, order may vary
+        // Suponiendo que el orden es por createdAt descendente, pero como tienen el mismo tiempo, el orden puede variar
     }
 
     @Test
