@@ -1,45 +1,37 @@
 package ar.edu.huergo.tombers.entity;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import java.time.LocalDate;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @DisplayName("Tests de Entidad - Project")
-class ProjectEntityTest {
+public class ProjectEntityTest {
 
     @Test
-    @DisplayName("Embeddables se guardan en la entidad correctamente")
-    void embeddablesWorking() {
-        Project.ProjectStats stats = Project.ProjectStats.builder()
+    @DisplayName("Campos se guardan en la entidad correctamente")
+    public void fieldsWorking() {
+        Project p = Project.builder()
+                .title("Proyecto")
+                .description("desc")
                 .teamCurrent(2)
                 .teamMax(5)
                 .duration("3m")
                 .language("ES")
                 .type("OSS")
-                .build();
-
-        Project.Technology tech = Project.Technology.builder().name("Java").icon("java.svg").build();
-        Project.Objective obj = Project.Objective.builder()
-                .text("Crear API")
-                .status(Project.Objective.ObjectiveStatus.IN_PROGRESS)
-                .icon("api.svg").build();
-
-        Project p = Project.builder()
-                .title("Proyecto")
-                .description("desc")
-                .stats(stats)
-                .technologies(List.of(tech))
-                .objectives(List.of(obj))
+                .technologies(List.of("Java"))
+                .objectives(List.of("Crear API"))
                 .skillsNeeded(List.of("spring"))
                 .status(Project.ProjectStatus.ACTIVE)
+                .createdAt(LocalDate.now())
+                .updatedAt(LocalDate.now())
                 .build();
 
-        assertEquals(2, p.getStats().getTeamCurrent());
-        assertEquals("Java", p.getTechnologies().get(0).getName());
-        assertEquals(Project.Objective.ObjectiveStatus.IN_PROGRESS, p.getObjectives().get(0).getStatus());
+        assertEquals(2, p.getTeamCurrent());
+        assertEquals("Java", p.getTechnologies().get(0));
+        assertEquals("Crear API", p.getObjectives().get(0));
         assertEquals(Project.ProjectStatus.ACTIVE, p.getStatus());
     }
 }

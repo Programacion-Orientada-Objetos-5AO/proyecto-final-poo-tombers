@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import ar.edu.huergo.tombers.dto.project.ProjectCreateRequest;
@@ -91,34 +90,4 @@ public class ProjectController {
         return ResponseEntity.ok(Map.of("message", "Proyecto eliminado correctamente"));
     }
 
-    /**
-     * Busca proyectos que coincidan con un término de búsqueda.
-     * @param q Término de búsqueda.
-     * @return Lista de proyectos que coinciden con la búsqueda.
-     */
-    @GetMapping("/search")
-    public ResponseEntity<List<ProjectResponse>> searchProjects(@RequestParam String q) {
-        List<ProjectResponse> projects = projectService.searchProjects(q);
-        return ResponseEntity.ok(projects);
-    }
-
-    /**
-     * Obtiene proyectos activos.
-     * @return Lista de proyectos activos.
-     */
-    @GetMapping("/active")
-    public ResponseEntity<List<ProjectResponse>> getActiveProjects() {
-        List<ProjectResponse> projects = projectService.getActiveProjects();
-        return ResponseEntity.ok(projects);
-    }
-
-    /**
-     * Obtiene proyectos incompletos.
-     * @return Lista de proyectos incompletos.
-     */
-    @GetMapping("/incomplete")
-    public ResponseEntity<List<ProjectResponse>> getIncompleteProjects() {
-        List<ProjectResponse> projects = projectService.getIncompleteProjects();
-        return ResponseEntity.ok(projects);
-    }
 }

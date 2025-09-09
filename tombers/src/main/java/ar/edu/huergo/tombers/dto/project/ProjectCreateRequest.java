@@ -33,24 +33,11 @@ public class ProjectCreateRequest {
     
     private Integer teamMax;
     
-    private List<TechnologyRequest> technologies;
+    private List<String> technologies;
     
-    private List<ObjectiveRequest> objectives;
+    private List<String> objectives;
     
     private List<String> skillsNeeded;
-    
-    @Data
-    public static class TechnologyRequest {
-        private String name;
-        private String icon;
-    }
-    
-    @Data
-    public static class ObjectiveRequest {
-        private String text;
-        private String icon;
-        private ObjectiveStatus status;
-    }
     
     public enum ProjectStatus {
         ACTIVE, INACTIVE, COMPLETED, ON_HOLD

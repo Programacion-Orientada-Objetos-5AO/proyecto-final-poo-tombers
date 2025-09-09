@@ -1,6 +1,5 @@
 package ar.edu.huergo.tombers.service;
 
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -51,32 +50,7 @@ public class UserService {
 
         return userMapper.toDto(updatedUser);
     }
-
-    /**
-     * Busca usuarios que coincidan con la consulta proporcionada.
-     *
-     * @param query la cadena de búsqueda
-     * @return una lista de objetos UserResponse que representan los usuarios encontrados
-     */
-    public List<UserResponse> searchUsers(String query) {
-        List<User> users = userRepository.searchUsers(query);
-        return users.stream()
-                .map(userMapper::toDto)
-                .toList();
-    }
-
-    /**
-     * Obtiene una lista de usuarios disponibles.
-     *
-     * @return una lista de objetos UserResponse que representan los usuarios disponibles
-     */
-    public List<UserResponse> getAvailableUsers() {
-        List<User> users = userRepository.findAvailableUsers();
-        return users.stream()
-                .map(userMapper::toDto)
-                .toList();
-    }
-
+    
     /**
      * Crea un perfil de usuario y le asigna un rol.
      *

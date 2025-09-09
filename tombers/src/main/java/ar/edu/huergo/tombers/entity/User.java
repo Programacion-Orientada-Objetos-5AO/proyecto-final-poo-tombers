@@ -86,8 +86,6 @@ public class User implements UserDetails {
     /**
      * Lista de habilidades del usuario.
      */
-    @ElementCollection
-    @CollectionTable(name = "user_skills", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "skill")
     private List<String> skills;
 
@@ -147,16 +145,13 @@ public class User implements UserDetails {
     /**
      * Lista de certificaciones del usuario.
      */
-    @ElementCollection
-    @CollectionTable(name = "user_certifications", joinColumns = @JoinColumn(name = "user_id"))
+
     @Column(name = "certification")
     private List<String> certifications;
 
     /**
      * Lista de intereses del usuario.
      */
-    @ElementCollection
-    @CollectionTable(name = "user_interests", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "interest")
     private List<String> interests;
 

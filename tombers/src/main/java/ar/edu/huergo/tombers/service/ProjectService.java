@@ -92,42 +92,6 @@ public class ProjectService {
         projectRepository.deleteById(id);
     }
 
-    /**
-     * Busca proyectos que coincidan con la consulta proporcionada.
-     *
-     * @param query la cadena de búsqueda
-     * @return una lista de objetos ProjectResponse que representan los proyectos encontrados
-     */
-    public List<ProjectResponse> searchProjects(String query) {
-        List<Project> projects = projectRepository.searchProjects(query);
-        return projects.stream()
-                .map(projectMapper::toResponse)
-                .toList();
-    }
-
-    /**
-     * Obtiene una lista de proyectos activos ordenados por fecha de creación.
-     *
-     * @return una lista de objetos ProjectResponse que representan los proyectos activos
-     */
-    public List<ProjectResponse> getActiveProjects() {
-        List<Project> projects = projectRepository.findActiveProjectsOrderByCreatedAt();
-        return projects.stream()
-                .map(projectMapper::toResponse)
-                .toList();
-    }
-
-    /**
-     * Obtiene una lista de proyectos incompletos ordenados por progreso.
-     *
-     * @return una lista de objetos ProjectResponse que representan los proyectos incompletos
-     */
-    public List<ProjectResponse> getIncompleteProjects() {
-        List<Project> projects = projectRepository.findIncompleteProjectsOrderByProgress();
-        return projects.stream()
-                .map(projectMapper::toResponse)
-                .toList();
-    }
 }
 
 

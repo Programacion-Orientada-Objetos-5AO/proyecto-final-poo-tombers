@@ -1,10 +1,10 @@
 package ar.edu.huergo.tombers.repository;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,39 +48,5 @@ class UserRepositoryTest {
         assertFalse(userRepository.existsByEmail("x@x.com"));
     }
 
-    @Test
-    @DisplayName("findAvailableUsers devuelve solo DISPONIBLE")
-    void findAvailableUsers() {
-        // Given
-        userRepository.save(newUser("d@d.com", "userD", "Diego", "Diaz"));
-        User ocupado = newUser("o@o.com", "userO", "Olga", "Ortega");
-        ocupado.setStatus(User.UserStatus.OCUPADO);
-        userRepository.save(ocupado);
-
-        // When
-        var disponibles = userRepository.findAvailableUsers();
-
-        // Then
-        assertEquals(1, disponibles.size());
-        assertEquals("d@d.com", disponibles.get(0).getEmail());
-    }
-
-    @Test
-    @DisplayName("searchUsers busca por nombre, apellido, especialización y skills")
-    void searchUsersByFields() {
-        // Given
-        userRepository.save(newUser("a@a.com", "userA", "Ana", "Lopez"));
-        var u2 = newUser("b@b.com", "userB", "Beto", "Gomez");
-        u2.setSpecialization("backend java");
-        u2.setSkills(List.of("spring", "docker"));
-        userRepository.save(u2);
-
-        // When - Then
-        assertEquals(1, userRepository.searchUsers("ana").size());
-        assertEquals(1, userRepository.searchUsers("gomez").size());
-        assertEquals(1, userRepository.searchUsers("backend").size());
-        assertEquals(1, userRepository.searchUsers("docker").size());
-        assertEquals(0, userRepository.searchUsers("no existe").size());
-    }
 }
 

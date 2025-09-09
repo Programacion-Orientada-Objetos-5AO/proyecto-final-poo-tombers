@@ -1,16 +1,25 @@
 package ar.edu.huergo.tombers.entity;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDate;
-import java.util.List;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "projects")
@@ -34,19 +43,16 @@ public class Project {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Embedded
-    private ProjectStats stats;
+    private Integer teamCurrent;
+    private Integer teamMax;
+    private String duration;
+    private String language;
+    private String type;
 
-    @ElementCollection
-    @CollectionTable(name = "project_technologies", joinColumns = @JoinColumn(name = "project_id"))
-    private List<Technology> technologies;
+    private List<String> technologies;
 
-    @ElementCollection
-    @CollectionTable(name = "project_objectives", joinColumns = @JoinColumn(name = "project_id"))
-    private List<Objective> objectives;
+    private List<String> objectives;
 
-    @ElementCollection
-    @CollectionTable(name = "project_skills_needed", joinColumns = @JoinColumn(name = "project_id"))
     @Column(name = "skill")
     private List<String> skillsNeeded;
 
@@ -65,51 +71,5 @@ public class Project {
 
     public enum ProjectStatus {
         ACTIVE, INACTIVE, COMPLETED, ON_HOLD
-    }
-
-    @Embeddable
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ProjectStats {
-        @Column(name = "team_current")
-        private Integer teamCurrent;
-
-        @Column(name = "team_max")
-        private Integer teamMax;
-
-        private String duration;
-        private String language;
-        private String type;
-    }
-
-    @Embeddable
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Technology {
-        private String name;
-        private String icon;
-    }
-
-    @Embeddable
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Objective {
-        @Column(columnDefinition = "TEXT")
-        private String text;
-
-        @Enumerated(EnumType.STRING)
-        private ObjectiveStatus status;
-
-        private String icon;
-
-        public enum ObjectiveStatus {
-            COMPLETED, IN_PROGRESS, PENDING
-        }
     }
 }

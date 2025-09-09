@@ -25,7 +25,14 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.postgresql:postgresql'
+
+	// PostgreSQL (Descomentar para que funcione y activar el aplicationSupabase.properties)
+    //implementation 'org.postgresql:postgresql'
+	//testImplementation 'com.h2database:h2'
+
+	// Base de datos en memoria H2 (Comentar para usar PostgreSQL)
+	implementation 'com.h2database:h2'
+	runtimeOnly 'com.h2database:h2'
 
 	//Nueva dependencia para seguridad
 	implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -45,7 +52,6 @@ dependencies {
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'com.h2database:h2'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

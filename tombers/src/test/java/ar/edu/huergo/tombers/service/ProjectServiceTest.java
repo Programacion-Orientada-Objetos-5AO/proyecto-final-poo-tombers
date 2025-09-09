@@ -103,19 +103,5 @@ class ProjectServiceTest {
         when(projectRepository.existsById(2L)).thenReturn(false);
         assertThrows(EntityNotFoundException.class, () -> projectService.deleteProject(2L));
     }
-
-    @Test
-    @DisplayName("searchProjects / getActiveProjects / getIncompleteProjects mapean lista")
-    void otherListMethods() {
-        var p = project(1L, "A");
-        when(projectRepository.searchProjects("q")).thenReturn(List.of(p));
-        when(projectRepository.findActiveProjectsOrderByCreatedAt()).thenReturn(List.of(p));
-        when(projectRepository.findIncompleteProjectsOrderByProgress()).thenReturn(List.of(p));
-        when(projectMapper.toResponse(any(Project.class))).thenReturn(ProjectResponse.builder().title("A").build());
-
-        assertEquals(1, projectService.searchProjects("q").size());
-        assertEquals(1, projectService.getActiveProjects().size());
-        assertEquals(1, projectService.getIncompleteProjects().size());
-    }
 }
 

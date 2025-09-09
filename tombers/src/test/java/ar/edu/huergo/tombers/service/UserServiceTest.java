@@ -79,29 +79,6 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("searchUsers mapea lista de entidades a DTOs")
-    void searchUsers() {
-        var user = sampleUser();
-        when(userRepository.searchUsers("ana")).thenReturn(List.of(user));
-        when(userMapper.toDto(user)).thenReturn(UserResponse.builder().email(user.getEmail()).build());
-
-        var list = userService.searchUsers("ana");
-        assertEquals(1, list.size());
-        assertEquals("ana@test.com", list.get(0).getEmail());
-    }
-
-    @Test
-    @DisplayName("getAvailableUsers mapea lista de disponibles")
-    void getAvailableUsers() {
-        var user = sampleUser();
-        when(userRepository.findAvailableUsers()).thenReturn(List.of(user));
-        when(userMapper.toDto(any())).thenReturn(UserResponse.builder().email(user.getEmail()).build());
-
-        var list = userService.getAvailableUsers();
-        assertEquals(1, list.size());
-    }
-
-    @Test
     @DisplayName("createProfile crea usuario cuando email no existe y rol válido")
     void createProfileOk() {
         when(userRepository.existsByEmail("nuevo@test.com")).thenReturn(false);
