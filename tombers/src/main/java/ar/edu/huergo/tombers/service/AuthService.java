@@ -15,7 +15,7 @@ import ar.edu.huergo.tombers.dto.auth.RegisterRequest;
 import ar.edu.huergo.tombers.entity.Role;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.repository.UserRepository;
-import ar.edu.huergo.tombers.security.JwtService;
+import ar.edu.huergo.tombers.security.JwtTokenService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
@@ -25,7 +25,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
+    private final JwtTokenService jwtTokenService;
     private final AuthenticationManager authenticationManager;
 
     /**
@@ -74,7 +74,11 @@ public class AuthService {
         User savedUser = userRepository.save(user);
 
         // Generar token JWT
-        String token = jwtService.generateToken(savedUser);
+        // Construimos la lista de roles con el prefijo ROLE_ esperado por seguridad
+        var roles = savedUser.getRoles().stream()
+                .map(r -> "ROLE_" + r.name())
+                .toList();
+        String token = jwtTokenService.generarToken(savedUser, roles);
 
         return AuthResponse.builder()
                 .message("Usuario registrado exitosamente")
@@ -107,7 +111,10 @@ public class AuthService {
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
         // Generar token JWT
-        String token = jwtService.generateToken(user);
+        var roles = user.getRoles() != null ? user.getRoles().stream()
+                .map(r -> "ROLE_" + r.name())
+                .toList() : java.util.List.<String>of();
+        String token = jwtTokenService.generarToken(user, roles);
 
         return AuthResponse.builder()
                 .message("Inicio de sesión exitoso")
