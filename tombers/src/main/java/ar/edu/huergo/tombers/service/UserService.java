@@ -1,5 +1,6 @@
 package ar.edu.huergo.tombers.service;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -21,6 +22,10 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final RolRepository rolRepository;
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
 
     /**
      * Obtiene el perfil de un usuario por su email.

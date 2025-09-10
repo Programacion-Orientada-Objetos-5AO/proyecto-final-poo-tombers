@@ -42,6 +42,13 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    // ver todos los usuarios
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
     /**
      * Actualiza el perfil del usuario autenticado.
      * @param authentication Información de autenticación del usuario.

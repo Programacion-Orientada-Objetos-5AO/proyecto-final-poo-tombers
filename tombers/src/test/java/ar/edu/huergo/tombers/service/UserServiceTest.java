@@ -21,6 +21,7 @@ import ar.edu.huergo.tombers.entity.Rol;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.mapper.UserMapper;
 import ar.edu.huergo.tombers.repository.UserRepository;
+import ar.edu.huergo.tombers.repository.security.RolRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,9 +30,12 @@ class UserServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private UserMapper userMapper;
+    @Mock private RolRepository rolRepository;
     @InjectMocks private UserService userService;
 
     private User sampleUser() {
+        Rol userRole = new Rol("USER");
+        userRole.setId(1L);
         return User.builder()
                 .id(1L)
                 .firstName("Ana")
@@ -39,7 +43,7 @@ class UserServiceTest {
                 .email("ana@test.com")
                 .username("anita")
                 .password("pwd")
-                .roles(Set.of(Role.USER))
+                .roles(Set.of(userRole))
                 .build();
     }
 
@@ -81,7 +85,9 @@ class UserServiceTest {
     @Test
     @DisplayName("createProfile crea usuario cuando email no existe y rol válido")
     void createProfileOk() {
+        Rol userRole = new Rol("USER");
         when(userRepository.existsByEmail("nuevo@test.com")).thenReturn(false);
+        when(rolRepository.findByNombre("USER")).thenReturn(Optional.of(userRole));
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             u.setId(99L);
@@ -107,6 +113,7 @@ class UserServiceTest {
     @DisplayName("createProfile falla si rol inválido")
     void createProfileInvalidRole() {
         when(userRepository.existsByEmail("nuevo@test.com")).thenReturn(false);
+        when(rolRepository.findByNombre("ROL_INVALIDO")).thenReturn(Optional.empty());
         assertThrows(IllegalArgumentException.class, () -> userService.createProfile("nuevo@test.com", "u", "rol_invalido"));
     }
 }

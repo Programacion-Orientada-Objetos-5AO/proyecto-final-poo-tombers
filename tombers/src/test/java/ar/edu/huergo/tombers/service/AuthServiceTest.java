@@ -21,9 +21,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import ar.edu.huergo.tombers.dto.auth.AuthResponse;
 import ar.edu.huergo.tombers.dto.auth.LoginRequest;
 import ar.edu.huergo.tombers.dto.auth.RegisterRequest;
-import ar.edu.huergo.tombers.entity.Role;
+import ar.edu.huergo.tombers.entity.Rol;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.repository.UserRepository;
+import ar.edu.huergo.tombers.repository.security.RolRepository;
 import ar.edu.huergo.tombers.security.JwtTokenService;
 import jakarta.persistence.EntityNotFoundException;
 
@@ -35,17 +36,19 @@ class AuthServiceTest {
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtTokenService jwtTokenService;
     @Mock private AuthenticationManager authenticationManager;
+    @Mock private RolRepository rolRepository;
 
     @InjectMocks private AuthService authService;
 
     private User baseUser() {
+        Rol userRole = new Rol("USER");
         return User.builder()
                 .id(1L)
                 .firstName("Ana").lastName("Lopez")
                 .email("ana@test.com")
                 .username("anita")
                 .password("enc")
-                .roles(Set.of(Role.USER))
+                .roles(Set.of(userRole))
                 .build();
     }
 
@@ -59,15 +62,18 @@ class AuthServiceTest {
                 .password("PasswordSegura1234!")
                 .build();
 
+        Rol clienteRole = new Rol("CLIENTE");
+
         when(userRepository.existsByEmail("ana@test.com")).thenReturn(false);
         when(userRepository.existsByUsername("anita")).thenReturn(false);
+        when(rolRepository.findByNombre("CLIENTE")).thenReturn(Optional.of(clienteRole));
         when(passwordEncoder.encode(anyString())).thenReturn("enc");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             u.setId(1L);
             return u;
         });
-        when(jwtTokenService.generarToken(any(), eq(List.of("ROLE_USER")))).thenReturn("jwt-token");
+        when(jwtTokenService.generarToken(any(), eq(List.of("ROLE_CLIENTE")))).thenReturn("jwt-token");
 
         AuthResponse resp = authService.register(req);
         assertEquals("jwt-token", resp.getToken());

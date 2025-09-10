@@ -10,8 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-import ar.edu.huergo.tombers.entity.Role;
+import ar.edu.huergo.tombers.entity.Rol;
 import ar.edu.huergo.tombers.entity.User;
+import ar.edu.huergo.tombers.repository.security.RolRepository;
 
 @DataJpaTest
 @DisplayName("Tests de Repositorio - UserRepository")
@@ -20,24 +21,26 @@ class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    private User newUser(String email, String username, String firstName, String lastName) {
-        return User.builder()
-                .firstName(firstName)
-                .lastName(lastName)
-                .email(email)
-                .username(username)
-                .password("pwd")
-                .skills(List.of("java", "spring"))
-                .status(User.UserStatus.DISPONIBLE)
-                .roles(Set.of(Role.USER))
-                .build();
-    }
+    @Autowired
+    private RolRepository rolRepository;
+
+
 
     @Test
     @DisplayName("findByEmail / findByUsername / exists* funcionan")
     void findAndExistsMethods() {
         // Given
-        User u = newUser("a@a.com", "userA", "Ana", "Alvarez");
+        Rol userRole = rolRepository.save(new Rol("USER"));
+        User u = User.builder()
+                .firstName("Ana")
+                .lastName("Alvarez")
+                .email("a@a.com")
+                .username("userA")
+                .password("pwd")
+                .skills(List.of("java", "spring"))
+                .status(User.UserStatus.DISPONIBLE)
+                .roles(Set.of(userRole))
+                .build();
         userRepository.save(u);
 
         // When - Then

@@ -19,7 +19,7 @@ class UserEntityTest {
         User user = User.builder()
                 .email("user@test.com")
                 .username("user1")
-                .roles(Set.of(Role.ADMIN, Role.USER))
+                .roles(Set.of(new ar.edu.huergo.tombers.entity.Rol("ADMIN"), new ar.edu.huergo.tombers.entity.Rol("USER")))
                 .build();
 
         // When
