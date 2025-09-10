@@ -1,1 +1,0 @@
-Falta resolver algunas request y devoluciones a dichas request como la de obtener todos los usuarios o cuando el cliente no esta autorizado a algo.

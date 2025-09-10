@@ -23,8 +23,11 @@ public class UserService {
     private final UserMapper userMapper;
     private final RolRepository rolRepository;
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(userMapper::toDto)
+                .toList();
     }
 
     /**

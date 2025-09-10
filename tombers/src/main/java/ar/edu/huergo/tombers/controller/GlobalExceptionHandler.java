@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -53,6 +54,20 @@ public class GlobalExceptionHandler {
         problem.setProperty("errores", errors);
         problem.setType(URI.create("https://http.dev/problems/validation-error"));
         log.warn("Solicitud inválida: errores de validación {}", errors);
+        return problem;
+    }
+
+    /**
+     * Maneja accesos denegados (usuario autenticado sin permisos suficientes).
+     * Devuelve 403 con un mensaje claro de no autorizado.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        problem.setTitle("No autorizado");
+        problem.setDetail("No tiene permisos para acceder a este recurso");
+        problem.setType(URI.create("https://http.dev/problems/forbidden"));
+        log.warn("Acceso denegado: {}", ex.getMessage());
         return problem;
     }
 
