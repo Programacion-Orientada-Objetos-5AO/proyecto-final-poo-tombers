@@ -6,10 +6,11 @@ import org.springframework.stereotype.Service;
 
 import ar.edu.huergo.tombers.dto.user.UserResponse;
 import ar.edu.huergo.tombers.dto.user.UserUpdateRequest;
-import ar.edu.huergo.tombers.entity.Role;
+import ar.edu.huergo.tombers.entity.Rol;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.mapper.UserMapper;
 import ar.edu.huergo.tombers.repository.UserRepository;
+import ar.edu.huergo.tombers.repository.security.RolRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +20,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final RolRepository rolRepository;
 
     /**
      * Obtiene el perfil de un usuario por su email.
@@ -50,7 +52,7 @@ public class UserService {
 
         return userMapper.toDto(updatedUser);
     }
-    
+
     /**
      * Crea un perfil de usuario y le asigna un rol.
      *
@@ -65,13 +67,9 @@ public class UserService {
             throw new IllegalArgumentException("Usuario ya existe con ese email: " + email);
         }
 
-        // Convertir role string a Role enum
-        Role userRole;
-        try {
-            userRole = Role.valueOf(role.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Rol inválido: " + role);
-        }
+        // Obtener rol desde la base de datos
+        Rol userRole = rolRepository.findByNombre(role.toUpperCase())
+                .orElseThrow(() -> new IllegalArgumentException("Rol inválido: " + role));
 
         // Crear nuevo usuario desde cero
         User newUser = User.builder()
@@ -88,5 +86,3 @@ public class UserService {
         return userMapper.toDto(savedUser);
     }
 }
-
-

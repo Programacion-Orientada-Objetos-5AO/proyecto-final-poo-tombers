@@ -12,9 +12,10 @@ import org.springframework.stereotype.Service;
 import ar.edu.huergo.tombers.dto.auth.AuthResponse;
 import ar.edu.huergo.tombers.dto.auth.LoginRequest;
 import ar.edu.huergo.tombers.dto.auth.RegisterRequest;
-import ar.edu.huergo.tombers.entity.Role;
+import ar.edu.huergo.tombers.entity.Rol;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.repository.UserRepository;
+import ar.edu.huergo.tombers.repository.security.RolRepository;
 import ar.edu.huergo.tombers.security.JwtTokenService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
     private final AuthenticationManager authenticationManager;
+    private final RolRepository rolRepository;
 
     /**
      * Registra un nuevo usuario en el sistema.
@@ -45,6 +47,10 @@ public class AuthService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("El nombre de usuario ya está en uso");
         }
+
+        // Obtener rol CLIENTE desde la base de datos
+        Rol rolCliente = rolRepository.findByNombre("CLIENTE")
+                .orElseThrow(() -> new IllegalArgumentException("Rol 'CLIENTE' no encontrado"));
 
         // Crear nuevo usuario
         User user = User.builder()
@@ -66,7 +72,7 @@ public class AuthService {
                 .status(User.UserStatus.DISPONIBLE)
                 .certifications(request.getCertifications() != null ? request.getCertifications() : List.of())
                 .interests(request.getInterests() != null ? request.getInterests() : List.of())
-                .roles(Set.of(Role.USER))
+                .roles(Set.of(rolCliente))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -76,7 +82,7 @@ public class AuthService {
         // Generar token JWT
         // Construimos la lista de roles con el prefijo ROLE_ esperado por seguridad
         var roles = savedUser.getRoles().stream()
-                .map(r -> "ROLE_" + r.name())
+                .map(r -> "ROLE_" + r.getNombre())
                 .toList();
         String token = jwtTokenService.generarToken(savedUser, roles);
 
@@ -112,7 +118,7 @@ public class AuthService {
 
         // Generar token JWT
         var roles = user.getRoles() != null ? user.getRoles().stream()
-                .map(r -> "ROLE_" + r.name())
+                .map(r -> "ROLE_" + r.getNombre())
                 .toList() : java.util.List.<String>of();
         String token = jwtTokenService.generarToken(user, roles);
 
@@ -129,5 +135,3 @@ public class AuthService {
                 .build();
     }
 }
-
-

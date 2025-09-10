@@ -2,13 +2,15 @@ package ar.edu.huergo.tombers.config;
 
 import java.util.Set;
 
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import ar.edu.huergo.tombers.entity.Role;
+import ar.edu.huergo.tombers.entity.Rol;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.repository.UserRepository;
-import jakarta.annotation.PostConstruct;
+import ar.edu.huergo.tombers.repository.security.RolRepository;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -19,26 +21,24 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DataInitializer {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    @Bean
+    CommandLineRunner initData(RolRepository rolRepository, UserRepository userRepository, PasswordEncoder encoder) {
+        return args -> {
+            Rol admin = rolRepository.findByNombre("ADMIN").orElseGet(() -> rolRepository.save(new Rol("ADMIN")));
+            Rol cliente = rolRepository.findByNombre("CLIENTE").orElseGet(() -> rolRepository.save(new Rol("CLIENTE")));
 
-    /**
-     * Método ejecutado después de la construcción del bean para inicializar datos.
-     * Crea un usuario administrador con credenciales predeterminadas si no existe.
-     */
-    @PostConstruct
-    public void init() {
-        if (!userRepository.existsByEmail("admin@tombers.com")) {
-            User admin = User.builder()
-                    .firstName("Admin")
-                    .lastName("Tombers")
-                    .email("admin@tombers.com")
-                    .username("admin")
-                    .password(passwordEncoder.encode("admin123"))
-                    .status(User.UserStatus.DISPONIBLE)
-                    .roles(Set.of(Role.ADMIN))
-                    .build();
-            userRepository.save(admin);
-        }
+            if (!userRepository.existsByEmail("admin@tombers.com")) {
+                User userAdmin = User.builder()
+                        .firstName("Admin")
+                        .lastName("Tombers")
+                        .email("admin@tombers.com")
+                        .username("admin")
+                        .password(encoder.encode("admin123"))
+                        .status(User.UserStatus.DISPONIBLE)
+                        .roles(Set.of(admin))
+                        .build();
+                userRepository.save(userAdmin);
+            }
+        };
     }
 }
