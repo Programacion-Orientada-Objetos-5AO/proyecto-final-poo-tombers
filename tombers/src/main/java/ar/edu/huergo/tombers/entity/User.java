@@ -176,6 +176,14 @@ public class User implements UserDetails {
     @Column(name = "project_id")
     private List<Long> projectIds;
 
+    public List<Long> getProjectIds() {
+        return projectIds;
+    }
+
+    public void setProjectIds(List<Long> projectIds) {
+        this.projectIds = projectIds;
+    }
+
     /**
      * Fecha de creación del usuario.
      */
@@ -205,7 +213,7 @@ public class User implements UserDetails {
     public String getUsername() {
         return email;
     }
-    
+
     /**
      * Obtiene el campo de nombre de usuario (distinto del username para autenticación).
      * @return El nombre de usuario único.
@@ -242,7 +250,7 @@ public class User implements UserDetails {
     public boolean isAccountNonLocked() {
         return true;
     }
-
+    
     /**
      * Verifica si las credenciales del usuario no han expirado.
      * @return Siempre true, ya que no se implementa expiración de credenciales.
