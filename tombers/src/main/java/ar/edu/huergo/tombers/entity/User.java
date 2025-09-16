@@ -17,6 +17,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
@@ -167,6 +169,14 @@ public class User implements UserDetails {
     private Set<Rol> roles = new HashSet<>();
 
     /**
+     * Lista de proyectos subidos por el usuario (solo IDs).
+     */
+    @ElementCollection
+    @CollectionTable(name = "user_projects", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "project_id")
+    private List<Long> projectIds;
+
+    /**
      * Fecha de creación del usuario.
      */
     @CreatedDate
@@ -195,7 +205,7 @@ public class User implements UserDetails {
     public String getUsername() {
         return email;
     }
-
+    
     /**
      * Obtiene el campo de nombre de usuario (distinto del username para autenticación).
      * @return El nombre de usuario único.
