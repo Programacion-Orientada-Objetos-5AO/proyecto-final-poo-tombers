@@ -33,9 +33,8 @@ public class UserResponse {
     private String bio;
     private User.UserStatus status;
     private List<String> certifications;
+    private List<Long> projectsIds;
     private List<String> interests;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-
-
