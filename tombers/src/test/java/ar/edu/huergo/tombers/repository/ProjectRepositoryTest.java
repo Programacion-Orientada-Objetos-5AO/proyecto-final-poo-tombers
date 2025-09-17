@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import ar.edu.huergo.tombers.entity.Project;
+import ar.edu.huergo.tombers.entity.Skill;
 
 @DataJpaTest
 @DisplayName("Tests de Repositorio - ProjectRepository")
@@ -22,7 +23,7 @@ class ProjectRepositoryTest {
                 .description(desc)
                 .progress(progress)
                 .status(status)
-                .skillsNeeded(List.of("java", "spring"))
+                .skillsNeeded(List.of(Skill.builder().nombre("Python").nivel("Principiante").build() , Skill.builder().nombre("Java").nivel("Avanzado").build()))
                 .build();
         p.setCreatedAt(LocalDate.now());
         p.setUpdatedAt(LocalDate.now());

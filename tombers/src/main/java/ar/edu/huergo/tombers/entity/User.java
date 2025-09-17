@@ -14,9 +14,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
@@ -26,6 +25,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -86,8 +87,8 @@ public class User implements UserDetails {
     /**
      * Lista de habilidades del usuario.
      */
-    @Column(name = "skill")
-    private List<String> skills;
+    @ElementCollection
+    private List<Skill> skills;
 
     /**
      * Edad del usuario.
@@ -146,13 +147,13 @@ public class User implements UserDetails {
      * Lista de certificaciones del usuario.
      */
 
-    @Column(name = "certification")
+    @ElementCollection
     private List<String> certifications;
 
     /**
      * Lista de intereses del usuario.
      */
-    @Column(name = "interest")
+    @ElementCollection
     private List<String> interests;
 
     /**
@@ -164,6 +165,7 @@ public class User implements UserDetails {
         joinColumns = @JoinColumn(name = "usuario_id"),
         inverseJoinColumns = @JoinColumn(name = "rol_id")
     )
+    @Builder.Default
     private Set<Rol> roles = new HashSet<>();
 
     /**

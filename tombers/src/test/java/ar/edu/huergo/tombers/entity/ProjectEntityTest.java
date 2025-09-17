@@ -23,7 +23,7 @@ public class ProjectEntityTest {
                 .type("OSS")
                 .technologies(List.of("Java"))
                 .objectives(List.of("Crear API"))
-                .skillsNeeded(List.of("spring"))
+                .skillsNeeded(List.of(Skill.builder().nombre("Python").nivel("Principiante").build()))
                 .status(Project.ProjectStatus.ACTIVE)
                 .createdAt(LocalDate.now())
                 .updatedAt(LocalDate.now())

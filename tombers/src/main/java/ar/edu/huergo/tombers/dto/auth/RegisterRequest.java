@@ -2,6 +2,7 @@ package ar.edu.huergo.tombers.dto.auth;
 
 import java.util.List;
 
+import ar.edu.huergo.tombers.entity.Skill;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -17,8 +18,8 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class RegisterRequest {
 
     /**
@@ -60,7 +61,7 @@ public class RegisterRequest {
     /**
      * Lista de habilidades del usuario.
      */
-    private List<String> skills;
+    private List<Skill> skills;
 
     /**
      * Edad del usuario.

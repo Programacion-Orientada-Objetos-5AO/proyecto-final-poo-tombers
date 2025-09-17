@@ -2,6 +2,7 @@ package ar.edu.huergo.tombers.dto.project;
 
 import java.util.List;
 
+import ar.edu.huergo.tombers.entity.Skill;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -37,7 +38,7 @@ public class ProjectCreateRequest {
     
     private List<String> objectives;
     
-    private List<String> skillsNeeded;
+    private List<Skill> skillsNeeded;
     
     public enum ProjectStatus {
         ACTIVE, INACTIVE, COMPLETED, ON_HOLD

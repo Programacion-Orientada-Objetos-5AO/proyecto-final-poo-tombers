@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ar.edu.huergo.tombers.entity.Skill;
 
 @Data
 @Builder
@@ -26,7 +27,7 @@ public class ProjectResponse {
     private String type;
     private List<String> technologies;
     private List<String> objectives;
-    private List<String> skillsNeeded;
+    private List<Skill> skillsNeeded;
     private Integer progress;
     private Project.ProjectStatus status;
     private LocalDate createdAt;

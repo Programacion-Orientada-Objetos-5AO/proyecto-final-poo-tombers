@@ -1,13 +1,14 @@
 package ar.edu.huergo.tombers.dto.user;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import ar.edu.huergo.tombers.entity.Skill;
 import ar.edu.huergo.tombers.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Builder
@@ -20,7 +21,7 @@ public class UserResponse {
     private String lastName;
     private String email;
     private String username;
-    private List<String> skills;
+    private List<Skill> skills;
     private Integer age;
     private String birthDate;
     private String languages;

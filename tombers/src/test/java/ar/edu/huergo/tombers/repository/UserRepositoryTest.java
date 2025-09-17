@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import ar.edu.huergo.tombers.entity.Rol;
+import ar.edu.huergo.tombers.entity.Skill;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.repository.security.RolRepository;
 
@@ -37,7 +38,7 @@ class UserRepositoryTest {
                 .email("a@a.com")
                 .username("userA")
                 .password("pwd")
-                .skills(List.of("java", "spring"))
+                .skills(List.of(Skill.builder().nombre("Python").nivel("Principiante").build()))
                 .status(User.UserStatus.DISPONIBLE)
                 .roles(Set.of(userRole))
                 .build();

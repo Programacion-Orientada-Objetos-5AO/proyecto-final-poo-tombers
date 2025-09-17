@@ -1,12 +1,13 @@
 package ar.edu.huergo.tombers.dto.user;
 
+import java.util.List;
+
+import ar.edu.huergo.tombers.entity.Skill;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @Builder
@@ -29,7 +30,7 @@ public class UserUpdateRequest {
     private String github;
     private String portfolio;
     private String bio;
-    private List<String> skills;
+    private List<Skill> skills;
     private List<String> certifications;
     private List<String> interests;
 }
