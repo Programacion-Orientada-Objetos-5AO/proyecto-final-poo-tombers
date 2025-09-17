@@ -1,15 +1,19 @@
 package ar.edu.huergo.tombers.service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import ar.edu.huergo.tombers.dto.project.ProjectCreateRequest;
 import ar.edu.huergo.tombers.dto.project.ProjectResponse;
 import ar.edu.huergo.tombers.entity.Project;
+import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.mapper.ProjectMapper;
 import ar.edu.huergo.tombers.repository.ProjectRepository;
+import ar.edu.huergo.tombers.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +23,7 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
+    private final UserRepository userRepository;
 
     /**
      * Obtiene una lista de todos los proyectos disponibles en el sistema.
@@ -55,8 +60,19 @@ public class ProjectService {
         Project project = projectMapper.toEntity(request);
         project.setCreatedAt(LocalDate.now());
         project.setUpdatedAt(LocalDate.now());
-        
+
         Project savedProject = projectRepository.save(project);
+
+        // Agregar el ID del proyecto a la lista de proyectos del usuario autenticado
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+        if (user.getProjectIds() == null) {
+            user.setProjectIds(new ArrayList<>());
+        }
+        user.getProjectIds().add(savedProject.getId());
+        userRepository.save(user);
+
         return projectMapper.toResponse(savedProject);
     }
 

@@ -14,6 +14,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
@@ -169,6 +170,22 @@ public class User implements UserDetails {
     private Set<Rol> roles = new HashSet<>();
 
     /**
+     * Lista de proyectos subidos por el usuario (solo IDs).
+     */
+    @ElementCollection
+    @CollectionTable(name = "user_projects", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "project_id")
+    private List<Long> projectIds;
+
+    public List<Long> getProjectIds() {
+        return projectIds;
+    }
+
+    public void setProjectIds(List<Long> projectIds) {
+        this.projectIds = projectIds;
+    }
+
+    /**
      * Fecha de creación del usuario.
      */
     @CreatedDate
@@ -234,7 +251,7 @@ public class User implements UserDetails {
     public boolean isAccountNonLocked() {
         return true;
     }
-
+    
     /**
      * Verifica si las credenciales del usuario no han expirado.
      * @return Siempre true, ya que no se implementa expiración de credenciales.
