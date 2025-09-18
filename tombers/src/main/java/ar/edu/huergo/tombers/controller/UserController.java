@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
  * Proporciona endpoints para obtener y actualizar perfiles, búsqueda y creación de perfiles.
  */
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class UserController {

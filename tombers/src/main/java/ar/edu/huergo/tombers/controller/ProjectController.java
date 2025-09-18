@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
  * Proporciona endpoints para CRUD y búsquedas de proyectos.
  */
 @RestController
-@RequestMapping("/projects")
+@RequestMapping("/api/projects")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class ProjectController {

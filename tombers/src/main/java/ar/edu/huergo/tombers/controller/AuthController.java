@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
  * Proporciona endpoints para registro y login de usuarios.
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AuthController {

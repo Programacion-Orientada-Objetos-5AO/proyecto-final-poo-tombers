@@ -50,13 +50,13 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/static/**").permitAll()
-                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/projects/**").hasAnyRole("CLIENTE", "ADMIN")
-                .requestMatchers("/users/**").hasAnyRole("CLIENTE", "ADMIN")
-                .requestMatchers("/users/CreateProfile").hasRole("ADMIN")
+                .requestMatchers("/api/projects/**").hasAnyRole("CLIENTE", "ADMIN")
+                .requestMatchers("/api/users/**").hasAnyRole("CLIENTE", "ADMIN")
+                .requestMatchers("/api/users/CreateProfile").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
