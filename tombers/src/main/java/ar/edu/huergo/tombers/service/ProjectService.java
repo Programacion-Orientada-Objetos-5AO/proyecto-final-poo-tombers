@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -102,9 +103,24 @@ public class ProjectService {
      * @throws EntityNotFoundException si el proyecto no existe
      */
     public void deleteProject(Long id) {
-        if (!projectRepository.existsById(id)) {
-            throw new EntityNotFoundException("Proyecto no encontrado");
+        // Obtener el usuario autenticado
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        // Verificar si el proyecto existe
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
+
+        // Verificar si el usuario es admin o dueño del proyecto
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(role -> role.getNombre().equalsIgnoreCase("ADMIN"));
+        boolean isOwner = user.getProjectIds() != null && user.getProjectIds().contains(id);
+
+        if (!isAdmin && !isOwner) {
+            throw new AccessDeniedException("No tiene permisos para eliminar este proyecto");
         }
+
         projectRepository.deleteById(id);
     }
 

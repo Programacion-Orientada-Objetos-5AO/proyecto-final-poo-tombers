@@ -1,6 +1,5 @@
 package ar.edu.huergo.tombers.repository;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -41,6 +40,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return true si existe un usuario con ese username, false en caso contrario
      */
     boolean existsByUsername(String username);
+
+    /**
+     * Busca el usuario que tiene el proyecto especificado en su lista de proyectos.
+     *
+     * @param projectId el ID del proyecto
+     * @return un Optional que contiene el usuario propietario si se encuentra, vacío en caso contrario
+     */
+    @Query("SELECT u FROM User u WHERE :projectId MEMBER OF u.projectIds")
+    Optional<User> findByProjectId(Long projectId);
 }
 
 

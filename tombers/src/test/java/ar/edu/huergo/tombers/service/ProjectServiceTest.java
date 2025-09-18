@@ -115,11 +115,21 @@ class ProjectServiceTest {
     @Test
     @DisplayName("deleteProject elimina si existe y lanza si no")
     void deleteProject() {
-        when(projectRepository.existsById(1L)).thenReturn(true);
+        var user = new User();
+        user.setEmail("test@email.com");
+        user.setProjectIds(List.of(1L)); // User owns project 1
+        var project = project(1L, "Test");
+
+        SecurityContextHolder.setContext(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn("test@email.com");
+        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+
         projectService.deleteProject(1L);
         verify(projectRepository).deleteById(1L);
 
-        when(projectRepository.existsById(2L)).thenReturn(false);
+        when(projectRepository.findById(2L)).thenReturn(Optional.empty());
         assertThrows(EntityNotFoundException.class, () -> projectService.deleteProject(2L));
     }
 }
