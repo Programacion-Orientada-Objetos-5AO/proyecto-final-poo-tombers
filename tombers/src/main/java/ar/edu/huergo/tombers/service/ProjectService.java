@@ -64,14 +64,14 @@ public class ProjectService {
 
         Project savedProject = projectRepository.save(project);
 
-        // Agregar el ID del proyecto a la lista de proyectos del usuario autenticado
+        // Agregar el ID del proyecto a la lista de proyectos creados del usuario autenticado
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
-        if (user.getProjectIds() == null) {
-            user.setProjectIds(new ArrayList<>());
+        if (user.getCreatedProjectIds() == null) {
+            user.setCreatedProjectIds(new ArrayList<>());
         }
-        user.getProjectIds().add(savedProject.getId());
+        user.getCreatedProjectIds().add(savedProject.getId());
         userRepository.save(user);
 
         return projectMapper.toResponse(savedProject);
@@ -115,7 +115,7 @@ public class ProjectService {
         // Verificar si el usuario es admin o dueño del proyecto
         boolean isAdmin = user.getRoles().stream()
                 .anyMatch(role -> role.getNombre().equalsIgnoreCase("ADMIN"));
-        boolean isOwner = user.getProjectIds() != null && user.getProjectIds().contains(id);
+        boolean isOwner = user.getCreatedProjectIds() != null && user.getCreatedProjectIds().contains(id);
 
         if (!isAdmin && !isOwner) {
             throw new AccessDeniedException("No tiene permisos para eliminar este proyecto");

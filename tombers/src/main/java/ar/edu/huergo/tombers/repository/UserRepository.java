@@ -42,12 +42,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
 
     /**
-     * Busca el usuario que tiene el proyecto especificado en su lista de proyectos.
+     * Busca el usuario que tiene el proyecto especificado en su lista de proyectos creados.
      *
      * @param projectId el ID del proyecto
      * @return un Optional que contiene el usuario propietario si se encuentra, vacío en caso contrario
      */
-    @Query("SELECT u FROM User u WHERE :projectId MEMBER OF u.projectIds")
+    @Query("SELECT u FROM User u WHERE :projectId MEMBER OF u.createdProjectIds")
     Optional<User> findByProjectId(Long projectId);
 }
 

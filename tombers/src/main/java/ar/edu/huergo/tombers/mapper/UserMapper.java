@@ -18,13 +18,16 @@ public interface UserMapper {
     /**
      * Convierte una entidad User a un DTO UserResponse.
      * Mapea el campo usernameField de la entidad al campo username del DTO.
-     * Mapea projectIds de la entidad a projectsIds del DTO.
+     * Mapea los campos de proyectos de la entidad a los campos correspondientes del DTO.
      *
      * @param user la entidad User
      * @return el DTO UserResponse correspondiente
      */
     @Mapping(target = "username", source = "usernameField")
-    @Mapping(target = "projectsIds", source = "projectIds")
+    @Mapping(target = "createdProjectsIds", source = "createdProjectIds")
+    @Mapping(target = "likedProjectsIds", source = "likedProjectIds")
+    @Mapping(target = "dislikedProjectsIds", source = "dislikedProjectIds")
+    @Mapping(target = "participatingProjectsIds", source = "participatingProjectIds")
     UserResponse toDto(User user);
 
     /**

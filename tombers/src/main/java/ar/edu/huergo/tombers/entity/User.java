@@ -170,20 +170,38 @@ public class User implements UserDetails {
     private Set<Rol> roles = new HashSet<>();
 
     /**
-     * Lista de proyectos subidos por el usuario (solo IDs).
+     * Lista de IDs de proyectos creados por el usuario.
      */
     @ElementCollection
-    @CollectionTable(name = "user_projects", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(name = "user_created_projects", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "project_id")
-    private List<Long> projectIds;
+    private List<Long> createdProjectIds;
 
-    public List<Long> getProjectIds() {
-        return projectIds;
-    }
+    /**
+     * Lista de IDs de proyectos que le gustan al usuario (likeados).
+     */
+    @ElementCollection
+    @CollectionTable(name = "user_liked_projects", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "project_id")
+    private List<Long> likedProjectIds;
 
-    public void setProjectIds(List<Long> projectIds) {
-        this.projectIds = projectIds;
-    }
+    /**
+     * Lista de IDs de proyectos que no le gustan al usuario (dislikeados).
+     */
+    @ElementCollection
+    @CollectionTable(name = "user_disliked_projects", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "project_id")
+    private List<Long> dislikedProjectIds;
+
+    /**
+     * Lista de IDs de proyectos en los que el usuario participa.
+     */
+    @ElementCollection
+    @CollectionTable(name = "user_participating_projects", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "project_id")
+    private List<Long> participatingProjectIds;
+
+
 
     /**
      * Fecha de creación del usuario.

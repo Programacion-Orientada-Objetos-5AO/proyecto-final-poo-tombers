@@ -35,6 +35,10 @@ public class UserResponse {
     private List<String> certifications;
     private List<Long> projectsIds;
     private List<String> interests;
+    private List<Long> createdProjectsIds;
+    private List<Long> likedProjectsIds;
+    private List<Long> dislikedProjectsIds;
+    private List<Long> participatingProjectsIds;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

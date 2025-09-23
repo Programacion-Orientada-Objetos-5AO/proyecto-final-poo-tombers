@@ -77,7 +77,7 @@ class ProjectServiceTest {
         entity.setId(10L); // Set ID for the saved project
         var user = new User();
         user.setEmail("test@email.com");
-        user.setProjectIds(null);
+        user.setCreatedProjectIds(null);
         when(projectMapper.toEntity(req)).thenReturn(entity);
         when(projectRepository.save(entity)).thenReturn(entity);
         when(projectMapper.toResponse(entity)).thenReturn(ProjectResponse.builder().title("X").build());
@@ -91,7 +91,7 @@ class ProjectServiceTest {
         assertEquals("X", dto.getTitle());
         verify(projectRepository).save(entity);
         verify(userRepository).save(user);
-        assertEquals(List.of(10L), user.getProjectIds());
+        assertEquals(List.of(10L), user.getCreatedProjectIds());
     }
 
     @Test
@@ -117,7 +117,7 @@ class ProjectServiceTest {
     void deleteProject() {
         var user = new User();
         user.setEmail("test@email.com");
-        user.setProjectIds(List.of(1L)); // User owns project 1
+        user.setCreatedProjectIds(List.of(1L)); // User owns project 1
         var project = project(1L, "Test");
 
         SecurityContextHolder.setContext(securityContext);
