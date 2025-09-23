@@ -124,6 +124,159 @@ public class ProjectService {
         projectRepository.deleteById(id);
     }
 
+    /**
+     * Permite a un usuario dar like a un proyecto.
+     * Agrega el ID del usuario a la lista de likes del proyecto y
+     * agrega el ID del proyecto a la lista de proyectos likeados del usuario.
+     *
+     * @param projectId el identificador del proyecto al que se le quiere dar like
+     * @throws EntityNotFoundException si el proyecto no existe
+     */
+    public void likeProject(Long projectId) {
+        // Obtener el usuario autenticado
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        // Verificar si el proyecto existe
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
+
+        // Inicializar listas si son null
+        if (user.getLikedProjectIds() == null) {
+            user.setLikedProjectIds(new ArrayList<>());
+        }
+        if (project.getLikeIds() == null) {
+            project.setLikeIds(new ArrayList<>());
+        }
+
+        // Verificar que el usuario no haya dado like ya
+        if (user.getLikedProjectIds().contains(projectId)) {
+            throw new IllegalArgumentException("El usuario ya le dio like a este proyecto");
+        }
+
+        // Verificar que el usuario no haya dado dislike (no puede tener ambos)
+        if (user.getDislikedProjectIds() != null && user.getDislikedProjectIds().contains(projectId)) {
+            user.getDislikedProjectIds().remove(projectId);
+        }
+
+        // Agregar like: usuario -> proyecto y proyecto -> usuario
+        user.getLikedProjectIds().add(projectId);
+        project.getLikeIds().add(user.getId());
+
+        // Guardar cambios
+        userRepository.save(user);
+        projectRepository.save(project);
+    }
+
+    /**
+     * Permite a un usuario quitar el like de un proyecto.
+     * Remueve el ID del usuario de la lista de likes del proyecto y
+     * remueve el ID del proyecto de la lista de proyectos likeados del usuario.
+     *
+     * @param projectId el identificador del proyecto del que se quiere quitar el like
+     * @throws EntityNotFoundException si el proyecto no existe
+     */
+    public void unlikeProject(Long projectId) {
+        // Obtener el usuario autenticado
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        // Verificar si el proyecto existe
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
+
+        // Verificar que el usuario haya dado like previamente
+        if (user.getLikedProjectIds() == null || !user.getLikedProjectIds().contains(projectId)) {
+            throw new IllegalArgumentException("El usuario no le ha dado like a este proyecto");
+        }
+
+        // Remover like: usuario -> proyecto y proyecto -> usuario
+        user.getLikedProjectIds().remove(projectId);
+        if (project.getLikeIds() != null) {
+            project.getLikeIds().remove(user.getId());
+        }
+
+        // Guardar cambios
+        userRepository.save(user);
+        projectRepository.save(project);
+    }
+
+    /**
+     * Permite a un usuario dar dislike a un proyecto.
+     * Agrega el ID del usuario a la lista de dislikes del proyecto y
+     * agrega el ID del proyecto a la lista de proyectos dislikeados del usuario.
+     *
+     * @param projectId el identificador del proyecto al que se le quiere dar dislike
+     * @throws EntityNotFoundException si el proyecto no existe
+     */
+    public void dislikeProject(Long projectId) {
+        // Obtener el usuario autenticado
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        // Verificar si el proyecto existe
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
+
+        // Inicializar listas si son null
+        if (user.getDislikedProjectIds() == null) {
+            user.setDislikedProjectIds(new ArrayList<>());
+        }
+
+        // Verificar que el usuario no haya dado dislike ya
+        if (user.getDislikedProjectIds().contains(projectId)) {
+            throw new IllegalArgumentException("El usuario ya le dio dislike a este proyecto");
+        }
+
+        // Verificar que el usuario no haya dado like (no puede tener ambos)
+        if (user.getLikedProjectIds() != null && user.getLikedProjectIds().contains(projectId)) {
+            user.getLikedProjectIds().remove(projectId);
+            if (project.getLikeIds() != null) {
+                project.getLikeIds().remove(user.getId());
+            }
+        }
+
+        // Agregar dislike: usuario -> proyecto
+        user.getDislikedProjectIds().add(projectId);
+
+        // Guardar cambios
+        userRepository.save(user);
+        projectRepository.save(project);
+    }
+
+    /**
+     * Permite a un usuario quitar el dislike de un proyecto.
+     * Remueve el ID del proyecto de la lista de proyectos dislikeados del usuario.
+     *
+     * @param projectId el identificador del proyecto del que se quiere quitar el dislike
+     * @throws EntityNotFoundException si el proyecto no existe
+     */
+    public void undislikeProject(Long projectId) {
+        // Obtener el usuario autenticado
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        // Verificar si el proyecto existe
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
+
+        // Verificar que el usuario haya dado dislike previamente
+        if (user.getDislikedProjectIds() == null || !user.getDislikedProjectIds().contains(projectId)) {
+            throw new IllegalArgumentException("El usuario no le ha dado dislike a este proyecto");
+        }
+
+        // Remover dislike: usuario -> proyecto
+        user.getDislikedProjectIds().remove(projectId);
+
+        // Guardar cambios
+        userRepository.save(user);
+        projectRepository.save(project);
+    }
+
 }
 
 

@@ -90,4 +90,48 @@ public class ProjectController {
         return ResponseEntity.ok(Map.of("message", "Proyecto eliminado correctamente"));
     }
 
+    /**
+     * Permite a un usuario dar like a un proyecto.
+     * @param projectId ID del proyecto al que se le quiere dar like.
+     * @return Mensaje de confirmación en la respuesta HTTP.
+     */
+    @PostMapping("/{projectId}/like")
+    public ResponseEntity<Map<String, String>> likeProject(@PathVariable Long projectId) {
+        projectService.likeProject(projectId);
+        return ResponseEntity.ok(Map.of("message", "Like agregado correctamente al proyecto"));
+    }
+
+    /**
+     * Permite a un usuario quitar el like de un proyecto.
+     * @param projectId ID del proyecto del que se quiere quitar el like.
+     * @return Mensaje de confirmación en la respuesta HTTP.
+     */
+    @DeleteMapping("/{projectId}/like")
+    public ResponseEntity<Map<String, String>> unlikeProject(@PathVariable Long projectId) {
+        projectService.unlikeProject(projectId);
+        return ResponseEntity.ok(Map.of("message", "Like removido correctamente del proyecto"));
+    }
+
+    /**
+     * Permite a un usuario dar dislike a un proyecto.
+     * @param projectId ID del proyecto al que se le quiere dar dislike.
+     * @return Mensaje de confirmación en la respuesta HTTP.
+     */
+    @PostMapping("/{projectId}/dislike")
+    public ResponseEntity<Map<String, String>> dislikeProject(@PathVariable Long projectId) {
+        projectService.dislikeProject(projectId);
+        return ResponseEntity.ok(Map.of("message", "Dislike agregado correctamente al proyecto"));
+    }
+
+    /**
+     * Permite a un usuario quitar el dislike de un proyecto.
+     * @param projectId ID del proyecto del que se quiere quitar el dislike.
+     * @return Mensaje de confirmación en la respuesta HTTP.
+     */
+    @DeleteMapping("/{projectId}/dislike")
+    public ResponseEntity<Map<String, String>> undislikeProject(@PathVariable Long projectId) {
+        projectService.undislikeProject(projectId);
+        return ResponseEntity.ok(Map.of("message", "Dislike removido correctamente del proyecto"));
+    }
+
 }
