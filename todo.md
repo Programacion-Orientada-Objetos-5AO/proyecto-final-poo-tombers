@@ -3,9 +3,9 @@
 [x] Agregar lista de proyectos en la entidad de usuario y las funciones acompañantes.
 [x] Hacer que solo el usuario creador de un proyecto pueda borrarlo.
 [x] Hacer entidad de Skill (Habilidad y nivel de habilidad)
-¿[] Hacer request respecto a las skills (Agregar, modificar o eliminar skill)?
+[] Agregar a proyectos lista de miembros y lista de interesados
+[] Agregar al usuario lista de proyectos likeados, lista de proyectos dislikeados y lista de proyectos en los que participa.
+[] Hacer Request de funciones de usuario (Dar like/Dislike) con sus funciones requeridas como agregar el usuario a la lista de interesados de dicho proyecto, y agregando al proyecto como lista de likeados/dislikeados del usuario usando la ID del proyecto para identificarlo.
 [] Agregar el formato de los datos de contacto en la entity de usuario (Lista de una entidad en especifico?)
 
-Dependiendo de si queremos usar el frontend antes de hacer lo siguiente o no:
-
-[] Implementar lo necesario para chats de texto (Revisar requirimientos anteriores a este)
+Conectar con Backend: 
