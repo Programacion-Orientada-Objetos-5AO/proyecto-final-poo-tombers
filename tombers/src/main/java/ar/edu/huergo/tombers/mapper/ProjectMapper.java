@@ -20,12 +20,14 @@ public interface ProjectMapper {
 
     /**
      * Convierte un ProjectCreateRequest a una entidad Project.
-     * Ignora campos id, createdAt, updatedAt y establece status como ACTIVE.
+     * Ignora campos id, createdAt, updatedAt, memberIds, likeIds y establece status como ACTIVE.
      *
      * @param request el DTO de creación de proyecto
      * @return la entidad Project correspondiente
      */
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "memberIds", ignore = true)
+    @Mapping(target = "likeIds", ignore = true)
     Project toEntity(ProjectCreateRequest request);
 
     /**
@@ -34,16 +36,21 @@ public interface ProjectMapper {
      * @param project la entidad Project
      * @return el DTO ProjectResponse correspondiente
      */
+    @Mapping(target = "memberIds", source = "memberIds")
+    @Mapping(target = "likeIds", source = "likeIds")
     ProjectResponse toResponse(Project project);
 
     /**
      * Actualiza una entidad Project con los valores de un ProjectCreateRequest.
      * Ignora valores nulos en el DTO para no sobrescribir campos existentes.
+     * También ignora memberIds y likeIds ya que no están en el request.
      *
      * @param project la entidad Project a actualizar
      * @param request el DTO con los nuevos valores
      */
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "memberIds", ignore = true)
+    @Mapping(target = "likeIds", ignore = true)
     void updateEntity(@MappingTarget Project project, ProjectCreateRequest request);
 }
 

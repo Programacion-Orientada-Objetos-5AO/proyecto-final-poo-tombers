@@ -60,6 +60,14 @@ public class Project {
     @Column(name = "skill")
     private List<Skill> skillsNeeded;
 
+    @ElementCollection
+    @Column(name = "member_id")
+    private List<Long> memberIds;
+
+    @ElementCollection
+    @Column(name = "like_id")
+    private List<Long> likeIds;
+
     private Integer progress;
 
     @Enumerated(EnumType.STRING)
