@@ -28,6 +28,8 @@ public class ProjectResponse {
     private List<String> technologies;
     private List<String> objectives;
     private List<Skill> skillsNeeded;
+    private List<Long> memberIds;
+    private List<Long> likeIds;
     private Integer progress;
     private Project.ProjectStatus status;
     private LocalDate createdAt;
