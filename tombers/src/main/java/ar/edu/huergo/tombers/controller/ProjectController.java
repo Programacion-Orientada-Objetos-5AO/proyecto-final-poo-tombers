@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import ar.edu.huergo.tombers.dto.project.InterestedUsersResponse;
+import ar.edu.huergo.tombers.dto.project.ManageInterestedRequest;
 import ar.edu.huergo.tombers.dto.project.ProjectCreateRequest;
 import ar.edu.huergo.tombers.dto.project.ProjectResponse;
 import ar.edu.huergo.tombers.service.ProjectService;
@@ -132,6 +134,34 @@ public class ProjectController {
     public ResponseEntity<Map<String, String>> undislikeProject(@PathVariable Long projectId) {
         projectService.undislikeProject(projectId);
         return ResponseEntity.ok(Map.of("message", "Dislike removido correctamente del proyecto"));
+    }
+
+    /**
+     * Permite al creador de un proyecto ver la lista de usuarios interesados.
+     * Los interesados son usuarios que dieron like al proyecto pero no son miembros.
+     * @param projectId ID del proyecto.
+     * @return Lista de usuarios interesados en el proyecto.
+     */
+    @GetMapping("/{projectId}/interested")
+    public ResponseEntity<InterestedUsersResponse> getInterestedUsers(@PathVariable Long projectId) {
+        InterestedUsersResponse response = projectService.getInterestedUsers(projectId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Permite al creador de un proyecto aceptar o rechazar a un usuario interesado.
+     * Si acepta, el usuario se convierte en miembro del proyecto.
+     * Si rechaza, se remueve el like del usuario.
+     * @param projectId ID del proyecto.
+     * @param request DTO con el ID del usuario y la acción (ACCEPT/REJECT).
+     * @return Mensaje de confirmación en la respuesta HTTP.
+     */
+    @PostMapping("/{projectId}/manage-interested")
+    public ResponseEntity<Map<String, String>> manageInterestedUser(
+            @PathVariable Long projectId,
+            @Valid @RequestBody ManageInterestedRequest request) {
+        projectService.manageInterestedUser(projectId, request);
+        return ResponseEntity.ok(Map.of("message", "Usuario procesado correctamente"));
     }
 
 }
