@@ -1,369 +1,290 @@
-// FEED - Versión mejorada con mejor gestión de eventos
+﻿// Archivo: static/scripts/script.js
+// Maneja las interacciones visuales del feed (swipe de tarjetas y modal de creación de proyectos).
+
 document.addEventListener('DOMContentLoaded', () => {
     const expandedCard = document.getElementById('expanded-card');
     const closeExpanded = document.getElementById('close-expanded');
-    let expandedView = false;
-
-    let card = document.getElementById('project-card');
+    const projectCard = document.getElementById('project-card');
     const statusIndicators = document.getElementById('status-indicators');
-    const likeIndicator = statusIndicators.querySelector('.like-indicator');
-    const dislikeIndicator = statusIndicators.querySelector('.dislike-indicator');
-    const ampliarIndicator = statusIndicators.querySelector('.ampliar-indicator');
-    const sidebar = document.getElementById('sidebar');
-    const sidebarTrigger = document.getElementById('sidebar-trigger');
-    
+    const likeIndicator = statusIndicators?.querySelector('.like-indicator');
+    const dislikeIndicator = statusIndicators?.querySelector('.dislike-indicator');
+    const ampliarIndicator = statusIndicators?.querySelector('.ampliar-indicator');
 
     const createProjectBtn = document.getElementById('create-project-btn');
     const createProjectCard = document.getElementById('create-project-card');
-    const closeCreate = document.getElementById('close-create');
     const cancelCreate = document.getElementById('cancel-create');
     const createForm = document.getElementById('create-form');
-
-
     const projectImageInput = document.getElementById('project-image');
     const imagePreview = document.getElementById('image-preview');
     const previewImg = document.getElementById('preview-img');
     const removeImageBtn = document.getElementById('remove-image');
-    const imagePlaceholder = imagePreview.querySelector('.image-placeholder');
-    
-    let selectedImageFile = null;
+    const imagePlaceholder = imagePreview?.querySelector('.image-placeholder');
 
+    let selectedImageDataUrl = null;
+    let isDragging = false;
     let startX = 0;
     let startY = 0;
     let offsetX = 0;
     let offsetY = 0;
-    let isDragging = false;
-    let isHoveringSidebar = false;
+    let expandedView = false;
 
+    function openCreateModal() {
+        if (!createProjectCard) return;
+        createProjectCard.classList.remove('hidden');
+        requestAnimationFrame(() => createProjectCard.classList.add('visible'));
+    }
 
-    projectImageInput?.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-            selectedImageFile = file;
-            const reader = new FileReader();
-            
-            reader.onload = (e) => {
-                previewImg.src = e.target.result;
+    function closeCreateModal() {
+        if (!createProjectCard) return;
+        createProjectCard.classList.remove('visible');
+        setTimeout(() => {
+            createProjectCard.classList.add('hidden');
+            createForm?.reset();
+            resetImagePreview();
+        }, 300);
+    }
+
+    function resetImagePreview() {
+        selectedImageDataUrl = null;
+        if (previewImg) {
+            previewImg.src = '';
+            previewImg.style.display = 'none';
+        }
+        if (removeImageBtn) {
+            removeImageBtn.style.display = 'none';
+        }
+        if (imagePlaceholder) {
+            imagePlaceholder.style.display = 'flex';
+        }
+    }
+
+    projectImageInput?.addEventListener('change', (event) => {
+        const file = event.target.files?.[0];
+        if (!file || !file.type.startsWith('image/')) {
+            resetImagePreview();
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (loadEvent) => {
+            selectedImageDataUrl = loadEvent.target?.result || null;
+            if (previewImg) {
+                previewImg.src = selectedImageDataUrl;
                 previewImg.style.display = 'block';
+            }
+            if (removeImageBtn) {
                 removeImageBtn.style.display = 'block';
+            }
+            if (imagePlaceholder) {
                 imagePlaceholder.style.display = 'none';
-            };
-            
-            reader.readAsDataURL(file);
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    removeImageBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        resetImagePreview();
+        if (projectImageInput) {
+            projectImageInput.value = '';
         }
     });
 
-    removeImageBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        selectedImageFile = null;
-        projectImageInput.value = '';
-        previewImg.src = '';
-        previewImg.style.display = 'none';
-        removeImageBtn.style.display = 'none';
-        imagePlaceholder.style.display = 'flex';
-    });
+    createProjectBtn?.addEventListener('click', openCreateModal);
 
-    function closeCreateModal() {
-        createProjectCard.classList.remove('visible');
-        setTimeout(() => {
-            createProjectCard.classList.add('hidden');
-            createForm.reset();
-            if (selectedImageFile) {
-                selectedImageFile = null;
-                previewImg.src = '';
-                previewImg.style.display = 'none';
-                removeImageBtn.style.display = 'none';
-                imagePlaceholder.style.display = 'flex';
-            }
-        }, 400);
-    }
-
-
-    function closeCreateModal() {
-        createProjectCard.classList.remove('visible');
-        setTimeout(() => {
-            createProjectCard.classList.add('hidden');
-            createForm.reset();
-        }, 400);
-    }
-
-    // Event listeners para crear proyecto
-    closeCreate?.addEventListener('click', closeCreateModal);
-    cancelCreate?.addEventListener('click', closeCreateModal);
-
-    createProjectBtn?.addEventListener('click', () => {
-        createProjectCard.classList.remove('hidden');
-        setTimeout(() => {
-            createProjectCard.classList.add('visible');
-        }, 10);
-    });
-
-    createProjectCard?.addEventListener('click', (e) => {
-        if (e.target === createProjectCard) {
+    createProjectCard?.addEventListener('click', (event) => {
+        if (event.target === createProjectCard) {
             closeCreateModal();
         }
     });
 
-    // Corregir el form submit (había código duplicado)
-    createForm?.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const formData = {
-            name: document.getElementById('project-name').value,
-            status: document.getElementById('project-status').value,
-            teamSize: document.getElementById('team-size').value,
-            duration: document.getElementById('duration').value,
-            language: document.getElementById('language').value,
-            type: document.getElementById('project-type').value,
-            description: document.getElementById('description').value,
-            technologies: document.getElementById('technologies').value.split(',').map(t => t.trim()),
-            skills: document.getElementById('skills').value.split(',').map(s => s.trim()),
-            image: selectedImageFile // Agregar la imagen al formData
-        };
-
-        console.log('Nuevo proyecto creado:', formData);
-        alert('¡Proyecto creado exitosamente!');
-        closeCreateModal();
-    });
-    
-    // Theme toggles
-    const toggle = document.getElementById('theme-toggle');
-    const togglemo = document.getElementById('theme-togglemo');
-
-    function syncThemeToggles(sourceToggle, targetToggle) {
-        targetToggle.checked = sourceToggle.checked;
-        document.body.classList.toggle('dark-mode', sourceToggle.checked);
-    }
-
-    toggle?.addEventListener('change', () => {
-        syncThemeToggles(toggle, togglemo);
-    });
-
-    togglemo?.addEventListener('change', () => {
-        syncThemeToggles(togglemo, toggle);
-    });
-
-    function setupSwipeHandlers(cardElement) {
-        if (!cardElement) {
-            console.warn('No se puede configurar swipe handlers: elemento no encontrado');
-            return;
-        }
-
-        console.log('Configurando swipe handlers para:', cardElement.id);
-
-        // Remover listeners existentes para evitar duplicados
-        cardElement.removeEventListener('touchstart', handleStart);
-        cardElement.removeEventListener('touchmove', handleMove);
-        cardElement.removeEventListener('touchend', handleEnd);
-        cardElement.removeEventListener('mousedown', handleStart);
-
-        // Agregar nuevos listeners
-        cardElement.addEventListener('touchstart', handleStart, { passive: false });
-        cardElement.addEventListener('touchmove', handleMove, { passive: false });
-        cardElement.addEventListener('touchend', handleEnd);
-        cardElement.addEventListener('mousedown', handleStart);
-
-        // Actualizar referencia global
-        card = cardElement;
-    }
-
-    // Configurar handlers iniciales
-    if (card) {
-        setupSwipeHandlers(card);
-    }
-
-    // Agregar listeners globales para mouse (estos no se duplican)
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('mouseup', handleEnd);
-
-    // Sidebar trigger hover handler
-    sidebarTrigger?.addEventListener('mouseenter', () => {
-        if (!isDragging) {
-            isHoveringSidebar = true;
-            sidebar.classList.add('active');
-        }
-    });
-
-    sidebar?.addEventListener('mouseleave', () => {
-        isHoveringSidebar = false;
-        sidebar.classList.remove('active');
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        const edgeDistance = window.innerWidth - e.clientX;
-        
-        if (edgeDistance < 15 && !isDragging && !isHoveringSidebar) {
-            isHoveringSidebar = true;
-            sidebar.classList.add('active');
-        } 
-        else if (edgeDistance > 80 && !isDragging && isHoveringSidebar && e.target.id !== 'sidebar' && !sidebar.contains(e.target)) {
-            isHoveringSidebar = false;
-            sidebar.classList.remove('active');
-        }
-    });
-
-    function handleStart(e) {
-        // Asegurar que estamos trabajando con la tarjeta correcta
-        card = document.getElementById('project-card');
-        if (!card) {
-            console.warn('No se encontró la tarjeta para iniciar el drag');
-            return;
-        }
-
-        isDragging = true;
-
-        createProjectBtn.style.transition = 'opacity 0.3s ease';
-        createProjectBtn.style.opacity = '0';
-        
-        if (sidebar.classList.contains('active')) {
-            sidebar.classList.remove('active');
-        }
-        
-        if (e.type === 'mousedown') {
-            e.preventDefault();
-        }
-        
-        if (e.type === 'touchstart') {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-        } else {
-            startX = e.clientX;
-            startY = e.clientY;
-        }
-        
-        offsetX = 0;
-        offsetY = 0;
-        card.style.transition = 'none';
-        
-        console.log('Drag iniciado en:', startX, startY);
-    }
-
-    function handleMove(e) {
-        if (expandedView) return;
-        if (!isDragging) return;
-        
-        // Actualizar referencia a la tarjeta actual
-        card = document.getElementById('project-card');
-        if (!card) return;
-        
-        let currentX, currentY;
-        if (e.type === 'touchmove') {
-            e.preventDefault();
-            currentX = e.touches[0].clientX;
-            currentY = e.touches[0].clientY;
-        } else {
-            currentX = e.clientX;
-            currentY = e.clientY;
-        }
-        
-        offsetX = currentX - startX;
-        offsetY = currentY - startY;
-        
-        const rotate = offsetX * 0.1;
-        card.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${rotate}deg)`;
-        
-        // Mostrar indicadores
-        statusIndicators.style.opacity = '1';
-        if (offsetX > 50) {
-            likeIndicator.style.opacity = '1';
-            dislikeIndicator.style.opacity = '0';
-            ampliarIndicator.style.opacity = '0'; 
-        } else if (offsetX < -50) {
-            likeIndicator.style.opacity = '0';
-            dislikeIndicator.style.opacity = '1';
-            ampliarIndicator.style.opacity = '0'; 
-        } else if (offsetY < -30) {
-            likeIndicator.style.opacity = '0';
-            dislikeIndicator.style.opacity = '0';
-            ampliarIndicator.style.opacity = '1';  
-        } else {
-            likeIndicator.style.opacity = '0';
-            dislikeIndicator.style.opacity = '0';
-            ampliarIndicator.style.opacity = '0'; 
-        }
-    }
-
-    function handleEnd() {
-        if (expandedView) return;
-        if (!isDragging) return;
-        
-        // Actualizar referencia a la tarjeta actual
-        card = document.getElementById('project-card');
-        if (!card) return;
-        
-        isDragging = false;
-
-        createProjectBtn.style.transition = 'opacity 0.3s ease';
-        createProjectBtn.style.opacity = '1';
-        
-        card.style.transition = 'transform 0.5s ease';
-        statusIndicators.style.opacity = '0';
-        
-        console.log('Drag terminado con offset:', offsetX, offsetY);
-        
-        if (offsetX > 100) {
-            card.style.transform = `translate(${window.innerWidth}px, ${offsetY}px) rotate(30deg)`;
-            setTimeout(() => {
-                resetCard();
-                handleSwipe('right');
-            }, 500);
-        } else if (offsetX < -100) {
-            card.style.transform = `translate(-${window.innerWidth}px, ${offsetY}px) rotate(-30deg)`;
-            setTimeout(() => {
-                resetCard();
-                handleSwipe('left');
-            }, 500);
-        } else if (offsetY < -100) {
-            card.style.transition = 'transform 0.5s ease';
-            card.style.transform = `translate(0px, -${window.innerHeight}px) rotate(0deg)`;
-
-            setTimeout(() => {
-                expandedCard.classList.remove('hidden');
-                expandedCard.classList.add('visible');
-                expandedView = true;
-                card.style.transition = 'none';
-                card.style.opacity = '0';
-                card.style.transform = 'translate(0, 0) rotate(0deg)';
-                card.style.transform = 'translate(0, 0)';
-                card.style.transition = 'opacity 0.3s ease';
-                card.style.opacity = '1';
-            }, 500);
-        } else {
-            card.style.transform = 'translate(0, 0) rotate(0deg)';
-        }
-    }
-
-    function resetCard() {
-        card = document.getElementById('project-card');
-        if (!card) return;
-        
-        card.style.transition = 'none';
-        card.style.opacity = '0';
-        card.style.transform = 'translate(0, 0) rotate(0deg)';
-        
-        setTimeout(() => {
-            card.style.transition = 'opacity 0.3s ease';
-            card.style.opacity = '1';
-        }, 50);
-    }
+    cancelCreate?.addEventListener('click', closeCreateModal);
 
     closeExpanded?.addEventListener('click', () => {
+        if (!expandedCard) return;
         expandedCard.classList.remove('visible');
         setTimeout(() => {
             expandedCard.classList.add('hidden');
             expandedView = false;
-        }, 400);
+        }, 300);
     });
 
-    function handleSwipe(direction) {
-        if (window.projectsManager) {
-            window.projectsManager.handleCardSwipe(direction);
+    function splitByComma(value) {
+        return value
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
+    }
+
+    function parseTeamMax(rawValue) {
+        if (!rawValue) return null;
+        const numbers = rawValue.match(/\d+/g);
+        if (!numbers || numbers.length === 0) {
+            return null;
+        }
+        return parseInt(numbers[numbers.length - 1], 10);
+    }
+
+    function buildProjectPayload() {
+        const title = document.getElementById('project-name')?.value.trim();
+        const status = document.getElementById('project-status')?.value;
+        const teamSizeRaw = document.getElementById('team-size')?.value.trim();
+        const duration = document.getElementById('duration')?.value.trim();
+        const language = document.getElementById('language')?.value;
+        const type = document.getElementById('project-type')?.value;
+        const description = document.getElementById('description')?.value.trim();
+        const technologiesRaw = document.getElementById('technologies')?.value || '';
+        const skillsRaw = document.getElementById('skills')?.value || '';
+
+        const teamMax = parseTeamMax(teamSizeRaw);
+        const technologies = splitByComma(technologiesRaw);
+        const skillsNeeded = splitByComma(skillsRaw).map((nombre) => ({ nombre, nivel: 'Intermedio' }));
+
+        return {
+            title,
+            description,
+            status: status || 'ACTIVE',
+            language: language || 'Español',
+            type: type || 'General',
+            duration: duration || null,
+            imageUrl: selectedImageDataUrl,
+            teamMax,
+            technologies,
+            objectives: [],
+            skillsNeeded,
+        };
+    }
+
+    createForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!window.apiClient) {
+            alert('No se puede acceder al servidor.');
+            return;
+        }
+
+        const payload = buildProjectPayload();
+        if (!payload.title || !payload.description) {
+            alert('Completá al menos el nombre y la descripción.');
+            return;
+        }
+
+        try {
+            const created = await window.apiClient.post('/api/projects', payload);
+            window.projectsManager?.addProject(created);
+            alert('Proyecto creado correctamente.');
+            closeCreateModal();
+        } catch (error) {
+            const message = error?.message || 'No se pudo crear el proyecto.';
+            alert(message);
+        }
+    });
+
+    projectCard?.addEventListener('mousedown', startDrag);
+    projectCard?.addEventListener('touchstart', startDrag);
+    window.addEventListener('mousemove', moveDrag);
+    window.addEventListener('touchmove', moveDrag, { passive: false });
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('touchend', endDrag);
+
+    function startDrag(event) {
+        if (!projectCard || expandedView) return;
+        isDragging = true;
+        offsetX = 0;
+        offsetY = 0;
+        projectCard.style.transition = 'none';
+
+        if (event.type === 'touchstart') {
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+        } else {
+            startX = event.clientX;
+            startY = event.clientY;
         }
     }
 
-    // Hacer funciones disponibles globalmente
-    window.handleSwipe = handleSwipe;
-    window.setupSwipeHandlers = setupSwipeHandlers;
+    function moveDrag(event) {
+        if (!isDragging || !projectCard || expandedView) return;
+
+        let currentX;
+        let currentY;
+
+        if (event.type === 'touchmove') {
+            event.preventDefault();
+            currentX = event.touches[0].clientX;
+            currentY = event.touches[0].clientY;
+        } else {
+            currentX = event.clientX;
+            currentY = event.clientY;
+        }
+
+        offsetX = currentX - startX;
+        offsetY = currentY - startY;
+
+        const rotate = offsetX * 0.1;
+        projectCard.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${rotate}deg)`;
+        updateIndicators();
+    }
+
+    function updateIndicators() {
+        if (!statusIndicators) return;
+        statusIndicators.style.opacity = '1';
+
+        if (offsetX > 60) {
+            likeIndicator && (likeIndicator.style.opacity = '1');
+            dislikeIndicator && (dislikeIndicator.style.opacity = '0');
+            ampliarIndicator && (ampliarIndicator.style.opacity = '0');
+        } else if (offsetX < -60) {
+            likeIndicator && (likeIndicator.style.opacity = '0');
+            dislikeIndicator && (dislikeIndicator.style.opacity = '1');
+            ampliarIndicator && (ampliarIndicator.style.opacity = '0');
+        } else if (offsetY < -60) {
+            likeIndicator && (likeIndicator.style.opacity = '0');
+            dislikeIndicator && (dislikeIndicator.style.opacity = '0');
+            ampliarIndicator && (ampliarIndicator.style.opacity = '1');
+        } else {
+            likeIndicator && (likeIndicator.style.opacity = '0');
+            dislikeIndicator && (dislikeIndicator.style.opacity = '0');
+            ampliarIndicator && (ampliarIndicator.style.opacity = '0');
+        }
+    }
+
+    function endDrag() {
+        if (!isDragging || !projectCard) return;
+        isDragging = false;
+
+        projectCard.style.transition = 'transform 0.4s ease';
+        statusIndicators && (statusIndicators.style.opacity = '0');
+
+        if (offsetX > 120) {
+            projectCard.style.transform = `translate(${window.innerWidth}px, ${offsetY}px) rotate(25deg)`;
+            setTimeout(() => {
+                resetCardPosition();
+                handleSwipe('right');
+            }, 300);
+        } else if (offsetX < -120) {
+            projectCard.style.transform = `translate(-${window.innerWidth}px, ${offsetY}px) rotate(-25deg)`;
+            setTimeout(() => {
+                resetCardPosition();
+                handleSwipe('left');
+            }, 300);
+        } else if (offsetY < -150) {
+            projectCard.style.transform = `translate(0, -${window.innerHeight}px) rotate(0deg)`;
+            setTimeout(() => {
+                expandedCard?.classList.remove('hidden');
+                expandedCard?.classList.add('visible');
+                expandedView = true;
+                resetCardPosition();
+            }, 300);
+            handleSwipe('up');
+        } else {
+            resetCardPosition();
+        }
+    }
+
+    function resetCardPosition() {
+        if (!projectCard) return;
+        projectCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+        projectCard.style.transform = 'translate(0, 0) rotate(0deg)';
+        projectCard.style.opacity = '1';
+    }
 });

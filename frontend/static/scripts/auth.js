@@ -1,513 +1,433 @@
-// Archivo: static/scripts/auth.js
+﻿// Archivo: static/scripts/auth.js
+// Gestiona el flujo de autenticación del frontend y delega las operaciones al backend Spring Boot.
 
 class AuthManager {
     constructor() {
+        this.loginForm = document.getElementById('loginForm');
+        this.registerForm = document.getElementById('registerForm');
+        this.passwordStrength = document.getElementById('passwordStrength');
+        this.notification = document.getElementById('notification');
+        this.loadingOverlay = document.getElementById('loadingOverlay');
         this.init();
     }
 
+    /**
+     * Inicializa el módulo validando la sesión actual y registrando los eventos necesarios.
+     */
     init() {
-        this.setupEventListeners();
-        this.setupPasswordValidation();
-        this.setupFormValidation();
-        this.hideNotification();
-    }
-
-    setupEventListeners() {
-        // Event listeners para los formularios
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-
-        if (loginForm) {
-            loginForm.addEventListener('submit', (e) => this.handleLogin(e));
-        }
-
-        if (registerForm) {
-            registerForm.addEventListener('submit', (e) => this.handleRegister(e));
-        }
-
-        // Event listeners para validación en tiempo real
-        const registerPassword = document.getElementById('registerPassword');
-        const confirmPassword = document.getElementById('confirmPassword');
-
-        if (registerPassword) {
-            registerPassword.addEventListener('input', () => this.validatePassword());
-        }
-
-        if (confirmPassword) {
-            confirmPassword.addEventListener('input', () => this.validatePasswordMatch());
-        }
-
-        // Event listeners para validación de email y username
-        const registerEmail = document.getElementById('registerEmail');
-        const username = document.getElementById('username');
-
-        if (registerEmail) {
-            registerEmail.addEventListener('blur', () => this.validateEmail());
-        }
-
-        if (username) {
-            username.addEventListener('blur', () => this.validateUsername());
-        }
-    }
-
-    async handleLogin(e) {
-        e.preventDefault();
-        
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-
-        // Validar campos
-        if (!email || !password) {
-            this.showNotification('Por favor completa todos los campos', 'error');
+        if (!window.apiClient) {
+            console.error('El objeto apiClient no está disponible');
             return;
         }
 
-        this.showLoading(true);
+        if (window.apiClient.auth.isAuthenticated()) {
+            window.location.href = '/feed';
+            return;
+        }
 
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password })
-            });
+        this.registerEventListeners();
+        this.registerRealtimeValidation();
+        this.hideNotification();
+    }
 
-            const data = await response.json();
+    /**
+     * Registra los listeners de envío de formularios y cambios básicos.
+     */
+    registerEventListeners() {
+        if (this.loginForm) {
+            this.loginForm.addEventListener('submit', (event) => this.handleLogin(event));
+        }
 
-            if (response.ok) {
-                this.showNotification('¡Inicio de sesión exitoso!', 'success');
-                
-                // Guardar datos del usuario en sessionStorage
-                sessionStorage.setItem('user', JSON.stringify(data.user));
-                
-                // Redirigir al feed después de un breve delay
-                setTimeout(() => {
-                    window.location.href = '/feed';
-                }, 1500);
-            } else {
-                this.showNotification(data.error || 'Error al iniciar sesión', 'error');
-                this.clearLoginErrors();
-                
-                if (data.error.includes('Email') || data.error.includes('contraseña')) {
-                    document.getElementById('loginEmailError').textContent = 'Email o contraseña incorrectos';
-                    document.getElementById('loginPasswordError').textContent = 'Email o contraseña incorrectos';
-                }
-            }
-        } catch (error) {
-            this.showNotification('Error de conexión. Intenta nuevamente.', 'error');
-            console.error('Error en login:', error);
-        } finally {
-            this.showLoading(false);
+        if (this.registerForm) {
+            this.registerForm.addEventListener('submit', (event) => this.handleRegister(event));
         }
     }
 
-    async handleRegister(e) {
-        e.preventDefault();
+    /**
+     * Configura validaciones en tiempo real para mejorar la experiencia del usuario.
+     */
+    registerRealtimeValidation() {
+        if (!this.registerForm) {
+            return;
+        }
 
-        // Validar formulario
+        const passwordInput = document.getElementById('registerPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const emailInput = document.getElementById('registerEmail');
+        const usernameInput = document.getElementById('username');
+
+        passwordInput?.addEventListener('input', () => this.updatePasswordStrength(passwordInput.value));
+        confirmPasswordInput?.addEventListener('input', () => this.validatePasswordMatch());
+        emailInput?.addEventListener('blur', () => this.validateEmail());
+        usernameInput?.addEventListener('blur', () => this.validateUsername());
+    }
+
+    /**
+     * Envía las credenciales al backend y gestiona la navegación posterior.
+     */
+    async handleLogin(event) {
+        event.preventDefault();
+
+        const email = document.getElementById('loginEmail')?.value.trim();
+        const password = document.getElementById('loginPassword')?.value;
+
+        if (!email || !password) {
+            this.showNotification('Completá todos los campos para ingresar.', 'error');
+            return;
+        }
+
+        try {
+            this.toggleLoading(true);
+            await window.apiClient.auth.login({ email, password });
+            this.showNotification('Inicio de sesión exitoso, redirigiendo...', 'success');
+            setTimeout(() => {
+                window.location.href = '/feed';
+            }, 1200);
+        } catch (error) {
+            const message = error?.message || 'No fue posible iniciar sesión.';
+            this.showNotification(message, 'error');
+            this.setFieldError('loginEmailError', message);
+            this.setFieldError('loginPasswordError', message);
+        } finally {
+            this.toggleLoading(false);
+        }
+    }
+
+    /**
+     * Valida los datos del formulario de registro y crea la cuenta en el backend.
+     */
+    async handleRegister(event) {
+        event.preventDefault();
+
         if (!this.validateRegisterForm()) {
             return;
         }
 
-        const formData = new FormData(e.target);
-        const userData = {
-            firstName: formData.get('firstName'),
-            lastName: formData.get('lastName'),
-            email: formData.get('email'),
-            username: formData.get('username'),
-            password: formData.get('password'),
-            skills: formData.get('skills')
-        };
+        const form = new FormData(this.registerForm);
+        const skills = this.parseSkills(form.get('skills'));
 
-        this.showLoading(true);
+        const payload = {
+            firstName: form.get('firstName')?.trim(),
+            lastName: form.get('lastName')?.trim(),
+            email: form.get('email')?.trim(),
+            username: form.get('username')?.trim(),
+            password: form.get('password'),
+            skills,
+            age: null,
+            birthDate: null,
+            languages: null,
+            specialization: null,
+            phone: null,
+            linkedin: null,
+            github: null,
+            portfolio: null,
+            bio: null,
+            certifications: [],
+            interests: [],
+        };
 
         try {
-            const response = await fetch('/api/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(userData)
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                this.showNotification('¡Cuenta creada exitosamente!', 'success');
-                
-                // Guardar datos del usuario en sessionStorage
-                sessionStorage.setItem('user', JSON.stringify(data.user));
-                
-                // Redirigir al feed después de un breve delay
-                setTimeout(() => {
-                    window.location.href = '/feed';
-                }, 1500);
-            } else {
-                this.showNotification(data.error || 'Error al crear la cuenta', 'error');
-                this.handleRegisterErrors(data.error);
-            }
+            this.toggleLoading(true);
+            const response = await window.apiClient.auth.register(payload);
+            const mensaje = response?.message || 'Registro exitoso, configurá tu perfil.';
+            this.showNotification(mensaje, 'success');
+            setTimeout(() => {
+                window.location.href = '/feed';
+            }, 1500);
         } catch (error) {
-            this.showNotification('Error de conexión. Intenta nuevamente.', 'error');
-            console.error('Error en registro:', error);
+            const message = error?.message || 'No fue posible crear la cuenta.';
+            this.showNotification(message, 'error');
         } finally {
-            this.showLoading(false);
+            this.toggleLoading(false);
         }
     }
 
+    /**
+     * Convierte el campo de habilidades en una estructura compatible con el backend.
+     */
+    parseSkills(rawValue) {
+        if (!rawValue) {
+            return [];
+        }
+
+        return rawValue
+            .split(',')
+            .map((skill) => skill.trim())
+            .filter(Boolean)
+            .map((nombre) => ({ nombre, nivel: 'Intermedio' }));
+    }
+
+    /**
+     * Valida los datos obligatorios del formulario de registro.
+     */
     validateRegisterForm() {
-        let isValid = true;
-        this.clearRegisterErrors();
+        this.clearErrors();
 
-        // Validar nombre
-        const firstName = document.getElementById('firstName').value.trim();
-        if (!firstName) {
-            document.getElementById('firstNameError').textContent = 'El nombre es requerido';
-            isValid = false;
+        const requiredFields = ['firstName', 'lastName', 'registerEmail', 'username', 'registerPassword', 'confirmPassword'];
+        let valid = true;
+
+        requiredFields.forEach((fieldId) => {
+            const input = document.getElementById(fieldId);
+            if (!input || !input.value.trim()) {
+                this.setFieldError(`${fieldId}Error`, 'Este campo es obligatorio.');
+                valid = false;
+            }
+        });
+
+        if (!this.validateEmail()) {
+            valid = false;
         }
 
-        // Validar apellido
-        const lastName = document.getElementById('lastName').value.trim();
-        if (!lastName) {
-            document.getElementById('lastNameError').textContent = 'El apellido es requerido';
-            isValid = false;
+        if (!this.validateUsername()) {
+            valid = false;
         }
 
-        // Validar email
-        const email = document.getElementById('registerEmail').value.trim();
-        if (!email) {
-            document.getElementById('registerEmailError').textContent = 'El email es requerido';
-            isValid = false;
-        } else if (!this.isValidEmail(email)) {
-            document.getElementById('registerEmailError').textContent = 'El email no es válido';
-            isValid = false;
+        if (!this.validatePasswordStrength()) {
+            valid = false;
         }
 
-        // Validar username
-        const username = document.getElementById('username').value.trim();
-        if (!username) {
-            document.getElementById('usernameError').textContent = 'El nombre de usuario es requerido';
-            isValid = false;
-        } else if (username.length < 3) {
-            document.getElementById('usernameError').textContent = 'El nombre de usuario debe tener al menos 3 caracteres';
-            isValid = false;
+        if (!this.validatePasswordMatch()) {
+            valid = false;
         }
 
-        // Validar contraseña
-        const password = document.getElementById('registerPassword').value;
-        if (!password) {
-            document.getElementById('registerPasswordError').textContent = 'La contraseña es requerida';
-            isValid = false;
-        } else if (password.length < 6) {
-            document.getElementById('registerPasswordError').textContent = 'La contraseña debe tener al menos 6 caracteres';
-            this.showNotification('La contraseña debe tener al menos 6 caracteres.', 'error');
-            isValid = false;
-        }
-
-        // Validar confirmación de contraseña
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        if (!confirmPassword) {
-            document.getElementById('confirmPasswordError').textContent = 'Confirma tu contraseña';
-            isValid = false;
-        } else if (password !== confirmPassword) {
-            document.getElementById('confirmPasswordError').textContent = 'Las contraseñas no coinciden';
-            this.showNotification('Las contraseñas ingresadas no coinciden.', 'error');
-            isValid = false;
-        }
-
-        // Validar términos y condiciones
-        const acceptTerms = document.getElementById('acceptTerms').checked;
-        if (!acceptTerms) {
-            this.showNotification('Debes aceptar los términos y condiciones', 'error');
-            isValid = false;
-        }
-
-        return isValid;
+        return valid;
     }
 
-    validatePassword() {
-        const password = document.getElementById('registerPassword').value;
-        const strengthIndicator = document.getElementById('passwordStrength');
-        
-        if (!strengthIndicator) return;
-
-        let strength = 0;
-        let strengthText = '';
-        let strengthClass = '';
-
-        if (password.length >= 6) strength++;
-        if (password.match(/[a-z]/)) strength++;
-        if (password.match(/[A-Z]/)) strength++;
-        if (password.match(/[0-9]/)) strength++;
-        if (password.match(/[^a-zA-Z0-9]/)) strength++;
-
-        switch (strength) {
-            case 0:
-            case 1:
-                strengthText = 'Muy débil';
-                strengthClass = 'very-weak';
-                break;
-            case 2:
-                strengthText = 'Débil';
-                strengthClass = 'weak';
-                break;
-            case 3:
-                strengthText = 'Regular';
-                strengthClass = 'regular';
-                break;
-            case 4:
-                strengthText = 'Fuerte';
-                strengthClass = 'strong';
-                break;
-            case 5:
-                strengthText = 'Muy fuerte';
-                strengthClass = 'very-strong';
-                break;
-        }
-
-        strengthIndicator.innerHTML = `
-            <div class="password-strength-bar ${strengthClass}">
-                <div class="strength-fill"></div>
-            </div>
-            <span class="strength-text">${strengthText}</span>
-        `;
-    }
-
-    validatePasswordMatch() {
-        const password = document.getElementById('registerPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const errorElement = document.getElementById('confirmPasswordError');
-
-        if (confirmPassword && password !== confirmPassword) {
-            errorElement.textContent = 'Las contraseñas no coinciden';
-        } else {
-            errorElement.textContent = '';
-        }
-    }
-
+    /**
+     * Verifica la estructura general del email.
+     */
     validateEmail() {
-        const email = document.getElementById('registerEmail').value.trim();
-        const errorElement = document.getElementById('registerEmailError');
+        const emailInput = document.getElementById('registerEmail');
+        const value = emailInput?.value.trim();
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        if (email && !this.isValidEmail(email)) {
-            errorElement.textContent = 'El formato del email no es válido';
-        } else {
-            errorElement.textContent = '';
+        if (!value || !regex.test(value)) {
+            this.setFieldError('registerEmailError', 'Ingresá un email válido.');
+            return false;
         }
+
+        return true;
     }
 
+    /**
+     * Valida que el nombre de usuario solo contenga caracteres permitidos.
+     */
     validateUsername() {
-        const username = document.getElementById('username').value.trim();
-        const errorElement = document.getElementById('usernameError');
+        const usernameInput = document.getElementById('username');
+        const value = usernameInput?.value.trim();
+        const regex = /^[a-zA-Z0-9_]{3,30}$/;
 
-        if (username && username.length < 3) {
-            errorElement.textContent = 'El nombre de usuario debe tener al menos 3 caracteres';
-        } else if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
-            errorElement.textContent = 'Solo se permiten letras, números y guiones bajos';
+        if (!value || !regex.test(value)) {
+            this.setFieldError('usernameError', 'El usuario debe tener 3 a 30 caracteres alfanuméricos o guión bajo.');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Comprueba los requisitos mínimos de seguridad exigidos por el backend.
+     */
+    validatePasswordStrength() {
+        const passwordInput = document.getElementById('registerPassword');
+        const value = passwordInput?.value || '';
+        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{16,}$/;
+
+        if (!value || !regex.test(value)) {
+            this.setFieldError('registerPasswordError', 'Usá al menos 16 caracteres con mayúsculas, minúsculas, número y símbolo.');
+            this.updatePasswordStrength(value);
+            return false;
+        }
+
+        this.updatePasswordStrength(value);
+        return true;
+    }
+
+    /**
+     * Informa cuando las contraseñas difieren.
+     */
+    validatePasswordMatch() {
+        const password = document.getElementById('registerPassword')?.value;
+        const confirm = document.getElementById('confirmPassword')?.value;
+
+        if (password !== confirm) {
+            this.setFieldError('confirmPasswordError', 'Las contraseñas no coinciden.');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Muestra un texto indicativo de la fuerza de la contraseña.
+     */
+    updatePasswordStrength(value = '') {
+        if (!this.passwordStrength) {
+            return;
+        }
+
+        if (!value) {
+            this.passwordStrength.textContent = '';
+            return;
+        }
+
+        const lengthScore = value.length >= 16 ? 1 : 0;
+        const complexityScore = /[A-Z]/.test(value) && /[a-z]/.test(value) && /\d/.test(value) && /[@$!%*?&]/.test(value) ? 1 : 0;
+        const score = lengthScore + complexityScore;
+
+        if (score === 2) {
+            this.passwordStrength.textContent = 'Contraseña segura';
+            this.passwordStrength.className = 'password-strength strong';
+        } else if (score === 1) {
+            this.passwordStrength.textContent = 'Contraseña débil (agregá más complejidad)';
+            this.passwordStrength.className = 'password-strength medium';
         } else {
-            errorElement.textContent = '';
+            this.passwordStrength.textContent = 'Contraseña muy débil';
+            this.passwordStrength.className = 'password-strength weak';
         }
     }
 
-    setupPasswordValidation() {
-        // Configuración adicional para validación de contraseñas
-        const passwordInputs = document.querySelectorAll('input[type="password"]');
-        passwordInputs.forEach(input => {
-            input.addEventListener('input', () => {
-                if (input.id === 'registerPassword') {
-                    this.validatePassword();
-                }
-                if (input.id === 'confirmPassword') {
-                    this.validatePasswordMatch();
-                }
-            });
-        });
-    }
-
-    setupFormValidation() {
-        // Configuración adicional para validación de formularios
-        const inputs = document.querySelectorAll('.form-input');
-        inputs.forEach(input => {
-            input.addEventListener('blur', () => {
-                this.validateInput(input);
-            });
-            
-            input.addEventListener('input', () => {
-                this.clearInputError(input);
-            });
-        });
-    }
-
-    validateInput(input) {
-        const value = input.value.trim();
-        const errorElement = document.getElementById(input.id + 'Error');
-        
-        if (!errorElement) return;
-
-        if (input.hasAttribute('required') && !value) {
-            errorElement.textContent = 'Este campo es requerido';
-        } else if (input.type === 'email' && value && !this.isValidEmail(value)) {
-            errorElement.textContent = 'El formato del email no es válido';
-        } else {
-            errorElement.textContent = '';
+    /**
+     * Activa o desactiva el overlay de carga global.
+     */
+    toggleLoading(show) {
+        if (!this.loadingOverlay) {
+            return;
         }
+
+        this.loadingOverlay.style.display = show ? 'flex' : 'none';
     }
 
-    clearInputError(input) {
-        const errorElement = document.getElementById(input.id + 'Error');
-        if (errorElement && input.value.trim()) {
-            errorElement.textContent = '';
-        }
-    }
-
-    handleRegisterErrors(error) {
-        // Limpiar errores anteriores
-        this.clearRegisterErrors();
-
-        // Mostrar errores específicos según el mensaje
-        if (error.includes('email') && error.includes('registrado')) {
-            document.getElementById('registerEmailError').textContent = 'Este email ya está registrado';
-        } else if (error.includes('usuario') && error.includes('uso')) {
-            document.getElementById('usernameError').textContent = 'Este nombre de usuario ya está en uso';
-        }
-    }
-
-    clearLoginErrors() {
-        const loginErrors = ['loginEmailError', 'loginPasswordError'];
-        loginErrors.forEach(errorId => {
-            const errorElement = document.getElementById(errorId);
-            if (errorElement) {
-                errorElement.textContent = '';
-            }
-        });
-    }
-
-    clearRegisterErrors() {
-        const registerErrors = [
-            'firstNameError', 'lastNameError', 'registerEmailError', 
-            'usernameError', 'registerPasswordError', 'confirmPasswordError'
-        ];
-        registerErrors.forEach(errorId => {
-            const errorElement = document.getElementById(errorId);
-            if (errorElement) {
-                errorElement.textContent = '';
-            }
-        });
-    }
-
-    isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
-
-    showLoading(show) {
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) {
-            loadingOverlay.style.display = show ? 'flex' : 'none';
-        }
-    }
-
+    /**
+     * Muestra una notificación contextual en pantalla.
+     */
     showNotification(message, type = 'info') {
-        const notification = document.getElementById('notification');
-        const messageElement = notification.querySelector('.notification-message');
-        const iconElement = notification.querySelector('.notification-icon');
+        if (!this.notification) {
+            return;
+        }
 
-        messageElement.textContent = message;
-        
-        // Configurar icono según el tipo
+        const iconElement = this.notification.querySelector('.notification-icon');
+        const messageElement = this.notification.querySelector('.notification-message');
+
         const icons = {
-            success: '✅',
+            success: '✔️',
             error: '❌',
             warning: '⚠️',
-            info: 'ℹ️'
+            info: 'ℹ️',
         };
 
-        iconElement.textContent = icons[type] || icons.info;
-        
-        // Aplicar clase de tipo
-        notification.className = `notification ${type}`;
-        
-        // Mostrar notificación
-        notification.style.display = 'flex';
-        
-        // Auto-ocultar después de 5 segundos
-        setTimeout(() => {
-            this.hideNotification();
-        }, 5000);
+        if (messageElement) {
+            messageElement.textContent = message;
+        }
+
+        if (iconElement) {
+            iconElement.textContent = icons[type] || icons.info;
+        }
+
+        this.notification.className = `notification ${type}`;
+        this.notification.style.display = 'flex';
+
+        clearTimeout(this.notificationTimeout);
+        this.notificationTimeout = setTimeout(() => this.hideNotification(), 5000);
     }
 
+    /**
+     * Oculta la notificación en pantalla.
+     */
     hideNotification() {
-        const notification = document.getElementById('notification');
-        if (notification) {
-            notification.style.display = 'none';
+        if (this.notification) {
+            this.notification.style.display = 'none';
         }
+    }
+
+    /**
+     * Setea el mensaje de error en un campo específico.
+     */
+    setFieldError(fieldId, message) {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            element.textContent = message;
+        }
+    }
+
+    /**
+     * Limpia los mensajes de error previos.
+     */
+    clearErrors() {
+        const errorIds = [
+            'firstNameError',
+            'lastNameError',
+            'registerEmailError',
+            'usernameError',
+            'registerPasswordError',
+            'confirmPasswordError',
+            'loginEmailError',
+            'loginPasswordError',
+        ];
+
+        errorIds.forEach((id) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = '';
+            }
+        });
     }
 }
 
-// Funciones globales para el HTML
+// Funciones globales utilizadas desde el HTML
 function showLogin() {
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    
-    if (loginForm && registerForm) {
-        loginForm.classList.add('active');
-        registerForm.classList.remove('active');
-    }
+    document.getElementById('loginForm')?.classList.add('active');
+    document.getElementById('registerForm')?.classList.remove('active');
 }
 
 function showRegister() {
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    
-    if (loginForm && registerForm) {
-        registerForm.classList.add('active');
-        loginForm.classList.remove('active');
-    }
+    document.getElementById('registerForm')?.classList.add('active');
+    document.getElementById('loginForm')?.classList.remove('active');
 }
 
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
-    const toggleIcon = input.parentElement.querySelector('.password-toggle-icon');
-    
-    if (input.type === 'password') {
-        input.type = 'text';
-        toggleIcon.textContent = '🙈';
-    } else {
-        input.type = 'password';
-        toggleIcon.textContent = '👁️';
+    if (!input) {
+        return;
+    }
+
+    const toggleIcon = input.parentElement?.querySelector('.password-toggle-icon');
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+
+    if (toggleIcon) {
+        toggleIcon.textContent = isPassword ? '🙈' : '👁️';
     }
 }
 
 function hideNotification() {
-    const notification = document.getElementById('notification');
-    if (notification) {
-        notification.style.display = 'none';
-    }
+    window.authManager?.hideNotification();
 }
 
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-    new AuthManager();
+// Inicializa el gestor cuando el DOM está listo
+window.addEventListener('DOMContentLoaded', () => {
+    window.authManager = new AuthManager();
+
+    // Efecto de aparición para tarjetas destacadas
+    const revealElements = document.querySelectorAll('.feature-card, .testimonial-card');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+                entry.target.style.transition = 'all 0.6s ease';
+            }
+        });
+    }, { threshold: 0.1 });
+
+    revealElements.forEach((element) => {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(30px)';
+        observer.observe(element);
+    });
 });
 
-// Exportar para uso en otros archivos si es necesario
+// Exporta la clase para pruebas unitarias si fuese necesario
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = AuthManager;
 }
-
-const revealElements = document.querySelectorAll('.feature-card, .testimonial-card');
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.style.opacity = '1';
-      entry.target.style.transform = 'translateY(0)';
-      entry.target.style.transition = 'all 0.6s ease';
-    }
-  });
-}, { threshold: 0.1 });
-
-revealElements.forEach(el => {
-  el.style.opacity = '0';
-  el.style.transform = 'translateY(30px)';
-  observer.observe(el);
-});

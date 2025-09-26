@@ -1,498 +1,545 @@
-// Archivo: scripts/projects.js - Versión corregida con gestión de eventos mejorada
+﻿// Archivo: scripts/projects.js
+// Obtiene proyectos desde el backend y actualiza las vistas del panel principal.
 
 class ProjectsManager {
     constructor() {
         this.projects = [];
+        this.allProjects = [];
         this.currentProjectIndex = 0;
         this.viewedProjects = new Set();
-        this.apiUrl = '/api/projects';
-        this.eventHandlersAttached = false; // Control de eventos
+        this.cardContainer = document.querySelector('.card-container');
+        this.projectCard = document.getElementById('project-card');
+        this.expandedCard = document.getElementById('expanded-card');
+        this.searchInput = document.getElementById('search-projects');
+        this.joinButton = null;
+        this.rotateIcon = null;
+        this.eventHandlersAttached = false;
         this.init();
     }
 
+    /**
+     * Inicializa el módulo validando la sesión y cargando la información remota.
+     */
     async init() {
+        if (!window.apiClient || !window.apiClient.auth.isAuthenticated()) {
+            window.location.href = '/';
+            return;
+        }
+
         await this.loadProjects();
-        this.loadViewedProjects();
         this.renderCurrentProject();
-        this.setupEventListeners();
+        this.attachGlobalHandlers();
     }
 
+    /**
+     * Recupera la lista de proyectos desde el backend.
+     */
     async loadProjects() {
         try {
-            const response = await fetch(this.apiUrl);
-            this.projects = await response.json();
-            console.log('Proyectos cargados:', this.projects.length);
-            
-            if (this.projects.length === 0) {
-                this.showNoProjectsMessage();
-            }
+            const response = await window.apiClient.get('/api/projects');
+            const projects = Array.isArray(response) ? response : [];
+            this.projects = projects.map((project) => this.normalizeProject(project)).filter(Boolean);
+            this.allProjects = [...this.projects];
         } catch (error) {
-            console.error('Error cargando proyectos:', error);
-            this.showNoProjectsMessage();
+            console.error('Error al cargar los proyectos:', error);
+            this.showNoProjectsMessage('No se pudieron cargar los proyectos. Intentá nuevamente más tarde.');
         }
     }
 
-    loadViewedProjects() {
-        if (!window.sessionViewedProjects) {
-            window.sessionViewedProjects = new Set();
+    /**
+     * Asegura que cada proyecto contenga la estructura que la interfaz espera.
+     */
+    normalizeProject(project) {
+        if (!project) {
+            return null;
         }
-        this.viewedProjects = window.sessionViewedProjects;
+
+        const stats = {
+            teamCurrent: project.teamCurrent ?? 0,
+            teamMax: project.teamMax ?? 0,
+            duration: project.duration || 'Por definir',
+            language: project.language || 'Sin idioma',
+            type: project.type || 'General',
+            progress: project.progress ?? 0,
+        };
+
+        const technologies = Array.isArray(project.technologies) ? project.technologies : [];
+        const objectives = Array.isArray(project.objectives) ? project.objectives : [];
+        const skillsNeeded = Array.isArray(project.skillsNeeded) ? project.skillsNeeded : [];
+
+        return {
+            id: project.id,
+            title: project.title || 'Proyecto sin título',
+            description: project.description || 'Sin descripción disponible.',
+            imageUrl: project.imageUrl || '/static/imagenes/coding-foto-ejemplo.jpg',
+            stats,
+            technologies,
+            objectives,
+            skillsNeeded,
+            status: project.status || 'ACTIVE',
+            repositoryUrl: project.repositoryUrl || null,
+            contactEmail: project.contactEmail || null,
+        };
     }
 
-    saveViewedProjects() {
-        window.sessionViewedProjects = this.viewedProjects;
-    }
-
-    markProjectAsViewed(projectId) {
-        this.viewedProjects.add(projectId);
-        this.saveViewedProjects();
-        console.log(`Proyecto ${projectId} marcado como visto. Total vistos: ${this.viewedProjects.size}`);
-    }
-
-    getUnviewedProjects() {
-        return this.projects.filter(project => !this.viewedProjects.has(project.id));
-    }
-
-    allProjectsViewed() {
-        return this.projects.length > 0 && this.viewedProjects.size >= this.projects.length;
-    }
-
-    resetViewedProjects() {
-        this.viewedProjects.clear();
-        this.saveViewedProjects();
-        console.log('Proyectos vistos reseteados');
-    }
-
-    showNoProjectsMessage() {
-        const cardContainer = document.querySelector('.card-container');
-        if (cardContainer) {
-            cardContainer.innerHTML = `
-                <div class="no-projects-message">
-                    <div class="no-projects-icon">📋</div>
-                    <h2>No hay proyectos disponibles</h2>
-                    <p>No se han encontrado proyectos en la base de datos.</p>
-                    <p>¡Sé el primero en crear un proyecto!</p>
-                </div>
-            `;
-        }
-        
-        const statusIndicators = document.getElementById('status-indicators');
-        if (statusIndicators) {
-            statusIndicators.style.display = 'none';
-        }
-    }
-
-    showAllProjectsViewedMessage() {
-        const cardContainer = document.querySelector('.card-container');
-        if (cardContainer) {
-            cardContainer.innerHTML = `
-                <div class="all-projects-viewed-message">
-                    <div class="all-projects-icon">🎉</div>
-                    <h2>¡Has visto todos los proyectos!</h2>
-                    <p>Ya has revisado todos los ${this.projects.length} proyectos disponibles.</p>
-                    <p>¿Quieres verlos nuevamente?</p>
-                    <button class="restart-button" onclick="window.projectsManager.restartProjects()">
-                        Ver proyectos otra vez
-                    </button>
-                </div>
-            `;
-        }
-        
-        const statusIndicators = document.getElementById('status-indicators');
-        if (statusIndicators) {
-            statusIndicators.style.display = 'none';
-        }
-    }
-
-    restartProjects() {
-        this.resetViewedProjects();
-        this.currentProjectIndex = 0;
-        
-        const statusIndicators = document.getElementById('status-indicators');
-        if (statusIndicators) {
-            statusIndicators.style.display = 'flex';
-        }
-        
-        // Forzar recreación completa de la tarjeta
-        this.recreateProjectCard();
-        this.renderCurrentProject();
-    }
-
-    // MÉTODO NUEVO: Recrear completamente la tarjeta con estructura HTML
-    recreateProjectCard() {
-        const cardContainer = document.querySelector('.card-container');
-        if (cardContainer) {
-            cardContainer.innerHTML = `
-                <div class="project-card" id="project-card">
-                    <div class="card-title-row">
-                        <img src="/static/imagenes/logoTomberS.png" alt="Logo Tomber Sur" class="logo-img-mini">
-                        <h2 class="card-title">Nombre proyecto</h2>
-                    </div>
-                    <div class="card-image"></div>
-                    <div class="card-stats">
-                        <span><span class="fluent--people-team-16-filled iconos"></span><span class="stats-text">07/23</span></span>
-                        <span><span class="tabler--clock iconos"></span><span class="stats-text">Indefinido</span></span>
-                        <span><span class="material-symbols--translate iconos"></span><span class="stats-text">Español</span></span>
-                        <span><span class="mdi--tools iconos"></span><span class="stats-text">Full Stack</span></span>
-                    </div>
-                    <div class="card-description">
-                        Lorem ipsum dolor sit amet consectetur adipiscing elit...
-                    </div>
-                    <div class="card-tech">
-                        <div class="tech-icon">Py</div>
-                        <div class="tech-icon">Html</div>
-                        <div class="tech-icon">Css</div>
-                        <div class="tech-icon">Js</div>
-                    </div>
-                    <div class="actions">
-                        <svg class="rotate-icon" viewBox="0 0 24 24">
-                            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
-                        </svg>
-                    </div>
-                </div>
-            `;
-            
-            // Resetear el flag de eventos y reconectar
-            this.eventHandlersAttached = false;
-            this.setupEventListeners();
-        }
-    }
-
+    /**
+     * Renderiza el proyecto actual o muestra un mensaje si no hay datos.
+     */
     renderCurrentProject() {
         if (this.projects.length === 0) {
-            this.showNoProjectsMessage();
+            this.showNoProjectsMessage('Todavía no hay proyectos publicados. ¡Creá el primero!');
             return;
         }
 
-        if (this.allProjectsViewed()) {
+        const nextProject = this.getNextUnviewedProject();
+        if (!nextProject) {
             this.showAllProjectsViewedMessage();
             return;
         }
 
-        const unviewedProjects = this.getUnviewedProjects();
-        
-        if (unviewedProjects.length === 0) {
-            this.showAllProjectsViewedMessage();
-            return;
-        }
-
-        const project = unviewedProjects[0];
-        this.updateProjectCard(project);
-        this.updateExpandedCard(project);
-        
-        this.currentProjectIndex = this.projects.findIndex(p => p.id === project.id);
+        this.currentProjectIndex = this.projects.findIndex((project) => project.id === nextProject.id);
+        this.updateProjectCard(nextProject);
+        this.updateExpandedCard(nextProject);
+        this.markProjectAsViewed(nextProject.id);
+        this.ensureHandlers();
     }
 
+    /**
+     * Actualiza la tarjeta principal del carrusel.
+     */
     updateProjectCard(project) {
-        const cardContainer = document.querySelector('.card-container');
-        
-        // Si no existe la tarjeta, recrearla completamente
-        if (cardContainer && !cardContainer.querySelector('.project-card')) {
-            this.recreateProjectCard();
+        const title = this.projectCard?.querySelector('.card-title');
+        const description = this.projectCard?.querySelector('.card-description');
+        const image = this.projectCard?.querySelector('.card-image');
+        const statsText = this.projectCard?.querySelectorAll('.stats-text');
+        const techContainer = this.projectCard?.querySelector('.card-tech');
+
+        if (title) {
+            title.textContent = project.title;
+        }
+        if (description) {
+            description.textContent = project.description;
+        }
+        if (image) {
+            image.style.backgroundImage = `url('${project.imageUrl}')`;
         }
 
-        // Actualizar contenido de la carta
-        const titleElement = document.querySelector('.card-title');
-        if (titleElement) titleElement.textContent = project.title;
-
-        const imageElement = document.querySelector('.card-image');
-        if (imageElement && project.image_url) {
-            imageElement.style.backgroundImage = `url('${project.image_url}')`;
+        if (statsText?.length >= 4) {
+            statsText[0].textContent = `${project.stats.teamCurrent}/${project.stats.teamMax}`;
+            statsText[1].textContent = project.stats.duration;
+            statsText[2].textContent = project.stats.language;
+            statsText[3].textContent = project.stats.type;
         }
 
-        this.updateStats(project.stats);
-        const descElement = document.querySelector('.card-description');
-        if (descElement) descElement.textContent = project.description;
-        this.updateTechnologies(project.technologies);
-
-        // Asegurar que los eventos están conectados
-        if (!this.eventHandlersAttached) {
-            this.setupEventListeners();
-        }
-    }
-
-    updateStats(stats) {
-        const statsElements = document.querySelectorAll('.stats-text');
-        if (statsElements.length >= 4) {
-            statsElements[0].textContent = `${stats.team_current}/${stats.team_max}`;
-            statsElements[1].textContent = stats.duration;
-            statsElements[2].textContent = stats.language;
-            statsElements[3].textContent = stats.type;
+        if (techContainer) {
+            techContainer.innerHTML = '';
+            const technologies = project.technologies.length > 0 ? project.technologies : ['Tecnologías a definir'];
+            technologies.slice(0, 4).forEach((tech) => {
+                const badge = document.createElement('div');
+                badge.className = 'tech-icon';
+                badge.textContent = this.getInitials(typeof tech === 'string' ? tech : tech?.nombre);
+                techContainer.appendChild(badge);
+            });
         }
     }
 
-    updateTechnologies(technologies) {
-        const techContainer = document.querySelector('.card-tech');
-        if (!techContainer) return;
-
-        techContainer.innerHTML = '';
-        technologies.forEach(tech => {
-            const techIcon = document.createElement('div');
-            techIcon.className = 'tech-icon';
-            techIcon.textContent = tech.icon;
-            techIcon.title = tech.name;
-            techContainer.appendChild(techIcon);
-        });
-    }
-
+    /**
+     * Actualiza la tarjeta expandida con toda la información disponible.
+     */
     updateExpandedCard(project) {
-        const expandedTitle = document.querySelector('.expanded-title');
-        if (expandedTitle) expandedTitle.textContent = project.title;
-
-        const expandedImage = document.querySelector('.expanded-image img');
-        if (expandedImage && project.image_url) {
-            expandedImage.src = project.image_url;
-            expandedImage.alt = `Preview de ${project.title}`;
-        }
-
-        const sectionContent = document.querySelector('.section-content');
-        if (sectionContent) sectionContent.textContent = project.description;
-
-        this.updateExpandedStats(project.stats);
-        this.updateExpandedTechnologies(project.technologies);
-
-        if (project.objectives) {
-            this.updateObjectives(project.objectives);
-        }
-
-        if (project.skills_needed) {
-            this.updateSkillsNeeded(project.skills_needed);
-        }
-
-        if (project.progress) {
-            this.updateProgress(project.progress);
-        }
-    }
-
-    updateExpandedStats(stats) {
-        const statValues = document.querySelectorAll('.stat-value');
-        if (statValues.length >= 4) {
-            statValues[0].textContent = `${stats.team_current}/${stats.team_max} miembros`;
-            statValues[1].textContent = stats.duration;
-            statValues[2].textContent = stats.language;
-            statValues[3].textContent = stats.type;
-        }
-    }
-
-    updateExpandedTechnologies(technologies) {
-        const techGrid = document.querySelector('.tech-grid');
-        if (!techGrid) return;
-
-        techGrid.innerHTML = '';
-        technologies.forEach(tech => {
-            const techItem = document.createElement('div');
-            techItem.className = 'tech-item';
-            techItem.innerHTML = `
-                <span class="tech-icon-expanded">${tech.icon}</span>
-                <span class="tech-name">${tech.name}</span>
-            `;
-            techGrid.appendChild(techItem);
-        });
-    }
-
-    updateObjectives(objectives) {
-        const objectivesList = document.querySelector('.objectives-list');
-        if (!objectivesList) return;
-
-        objectivesList.innerHTML = '';
-        objectives.forEach(objective => {
-            const objectiveItem = document.createElement('div');
-            objectiveItem.className = 'objective-item';
-            objectiveItem.innerHTML = `
-                <div class="objective-icon">${objective.icon}</div>
-                <span>${objective.text}</span>
-            `;
-            objectivesList.appendChild(objectiveItem);
-        });
-    }
-
-    updateSkillsNeeded(skills) {
-        const skillsGrid = document.querySelector('.skills-grid');
-        if (!skillsGrid) return;
-
-        skillsGrid.innerHTML = '';
-        skills.forEach(skill => {
-            const skillBadge = document.createElement('div');
-            skillBadge.className = 'skill-badge';
-            skillBadge.textContent = skill;
-            skillsGrid.appendChild(skillBadge);
-        });
-    }
-
-    updateProgress(progress) {
-        const progressFill = document.querySelector('.progress-fill');
-        const progressText = document.querySelector('.progress-text');
-        
-        if (progressFill) progressFill.style.width = `${progress}%`;
-        if (progressText) progressText.textContent = `${progress}% Completado`;
-    }
-
-    getNextUnviewedProject() {
-        const unviewedProjects = this.getUnviewedProjects();
-        return unviewedProjects.length > 0 ? unviewedProjects[0] : null;
-    }
-
-    nextProject() {
-        if (this.projects.length === 0) return;
-        
-        const currentProject = this.projects[this.currentProjectIndex];
-        if (currentProject) {
-            this.markProjectAsViewed(currentProject.id);
-        }
-        
-        this.renderCurrentProject();
-        
-        const unviewedCount = this.getUnviewedProjects().length;
-        console.log(`Proyectos restantes por ver: ${unviewedCount}`);
-    }
-
-    previousProject() {
-        if (this.projects.length === 0) return;
-        
-        this.currentProjectIndex = (this.currentProjectIndex - 1 + this.projects.length) % this.projects.length;
-        const project = this.projects[this.currentProjectIndex];
-        this.updateProjectCard(project);
-        this.updateExpandedCard(project);
-        console.log(`Mostrando proyecto ${this.currentProjectIndex + 1} de ${this.projects.length}`);
-    }
-
-    getRandomProject() {
-        const unviewedProjects = this.getUnviewedProjects();
-        if (unviewedProjects.length === 0) {
-            this.showAllProjectsViewedMessage();
+        if (!this.expandedCard) {
             return;
         }
-        
-        const randomProject = unviewedProjects[Math.floor(Math.random() * unviewedProjects.length)];
-        this.currentProjectIndex = this.projects.findIndex(p => p.id === randomProject.id);
-        this.renderCurrentProject();
+
+        const expandedTitle = this.expandedCard.querySelector('.expanded-title');
+        if (expandedTitle) {
+            expandedTitle.textContent = project.title;
+        }
+
+        const statusBadge = this.expandedCard.querySelector('.status-badge');
+        if (statusBadge) {
+            statusBadge.textContent = this.translateStatus(project.status);
+            statusBadge.className = `status-badge ${project.status === 'ACTIVE' ? 'active' : ''}`;
+        }
+
+        const expandedImage = this.expandedCard.querySelector('.expanded-image img');
+        if (expandedImage) {
+            expandedImage.src = project.imageUrl;
+        }
+
+        const statValues = this.expandedCard.querySelectorAll('.stat-value');
+        if (statValues.length >= 4) {
+            statValues[0].textContent = `${project.stats.teamCurrent}/${project.stats.teamMax}`;
+            statValues[1].textContent = project.stats.duration;
+            statValues[2].textContent = project.stats.language;
+            statValues[3].textContent = project.stats.type;
+        }
+
+        const descriptionSection = this.expandedCard.querySelector('.section-content');
+        if (descriptionSection) {
+            descriptionSection.textContent = project.description;
+        }
+
+        this.renderList(
+            this.expandedCard.querySelector('.tech-grid'),
+            project.technologies,
+            (tech) => this.buildTechItem(tech),
+        );
+
+        this.renderList(
+            this.expandedCard.querySelector('.objectives-list'),
+            project.objectives,
+            (objective) => this.buildObjectiveItem(objective),
+        );
+
+        this.renderList(
+            this.expandedCard.querySelector('.skills-grid'),
+            project.skillsNeeded,
+            (skill) => this.buildSkillBadge(skill),
+        );
     }
 
-    // MÉTODO MEJORADO: Setup de event listeners con control de duplicados
-    setupEventListeners() {
-        // Evitar duplicar event listeners
+    /**
+     * Permite reutilizar la lógica de renderizado de listas.
+     */
+    renderList(container, items, builder) {
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = '';
+        const normalizedItems = Array.isArray(items) && items.length > 0 ? items : ['Sin información disponible'];
+
+        normalizedItems.forEach((item) => {
+            const element = builder(item);
+            if (element) {
+                container.appendChild(element);
+            }
+        });
+    }
+
+    buildTechItem(tech) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'tech-item';
+
+        const icon = document.createElement('span');
+        icon.className = 'tech-icon-expanded';
+        icon.textContent = this.getInitials(typeof tech === 'string' ? tech : tech?.nombre);
+
+        const details = document.createElement('div');
+        details.className = 'tech-details';
+
+        const name = document.createElement('span');
+        name.className = 'tech-name';
+        name.textContent = typeof tech === 'string' ? tech : tech?.nombre || 'Tecnología';
+
+        const level = document.createElement('span');
+        level.className = 'tech-level';
+        const nivel = typeof tech === 'object' && tech?.nivel ? tech.nivel : '';
+        level.textContent = nivel;
+
+        details.appendChild(name);
+        if (nivel) {
+            details.appendChild(level);
+        }
+
+        wrapper.appendChild(icon);
+        wrapper.appendChild(details);
+        return wrapper;
+    }
+
+    buildObjectiveItem(objective) {
+        const item = document.createElement('div');
+        item.className = 'objective-item';
+        item.textContent = typeof objective === 'string' ? objective : objective?.text || 'Objetivo pendiente';
+        return item;
+    }
+
+    buildSkillBadge(skill) {
+        const badge = document.createElement('div');
+        badge.className = 'skill-badge';
+        if (typeof skill === 'string') {
+            badge.textContent = skill;
+        } else if (skill && typeof skill === 'object') {
+            const nombre = skill.nombre || 'Habilidad';
+            const nivel = skill.nivel ? ` (${skill.nivel})` : '';
+            badge.textContent = `${nombre}${nivel}`;
+        } else {
+            badge.textContent = 'Habilidad por definir';
+        }
+        return badge;
+    }
+
+    /**
+     * Devuelve las iniciales de una cadena para las etiquetas circulares.
+     */
+    getInitials(text) {
+        if (!text) {
+            return 'N/A';
+        }
+
+        return text
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((word) => word[0])
+            .join('')
+            .slice(0, 3)
+            .toUpperCase();
+    }
+
+    translateStatus(status) {
+        const map = {
+            ACTIVE: 'Activo',
+            INACTIVE: 'Inactivo',
+            COMPLETED: 'Completado',
+            ON_HOLD: 'En planificación',
+        };
+        return map[status] || 'Activo';
+    }
+
+    /**
+     * Gestiona los listeners que dependen de los nodos renderizados.
+     */
+    ensureHandlers() {
         if (this.eventHandlersAttached) {
             return;
         }
 
-        // Listener para el botón de refresh
-        const rotateIcon = document.querySelector('.rotate-icon');
-        if (rotateIcon) {
-            rotateIcon.addEventListener('click', () => {
-                this.previousProject();
-            });
-        }
+        this.rotateIcon = document.querySelector('.rotate-icon');
+        this.joinButton = document.querySelector('.action-btn.primary');
 
-        // Conectar los manejadores de swipe usando la función global
-        const newCard = document.getElementById('project-card');
-        if (newCard && window.setupSwipeHandlers) {
-            console.log('Conectando eventos de swipe a la nueva tarjeta');
-            window.setupSwipeHandlers(newCard);
-        }
+        this.rotateIcon?.addEventListener('click', () => this.nextProject());
+        this.joinButton?.addEventListener('click', () => {
+            const project = this.getCurrentProject();
+            if (project) {
+                this.registerLike(project.id);
+                alert(`Te uniste al proyecto "${project.title}"`);
+            }
+        });
 
-        this.setupCardEventListeners();
+        const contactButton = document.querySelector('.action-btn.tertiary');
+        contactButton?.addEventListener('click', () => {
+            const project = this.getCurrentProject();
+            if (!project || !project.contactEmail) {
+                alert('El equipo aún no publicó un contacto.');
+                return;
+            }
+            window.location.href = `mailto:${project.contactEmail}`;
+        });
+
         this.eventHandlersAttached = true;
     }
 
-    setupCardEventListeners() {
-        const joinButton = document.querySelector('.action-btn.primary');
-        if (joinButton) {
-            joinButton.addEventListener('click', () => {
-                if (this.projects.length > 0) {
-                    const currentProject = this.projects[this.currentProjectIndex];
-                    if (currentProject) {
-                        this.joinProject(currentProject);
-                    }
-                }
+    attachGlobalHandlers() {
+        if (this.searchInput) {
+            this.searchInput.addEventListener('input', (event) => {
+                const query = event.target.value;
+                this.searchProjects(query);
             });
         }
     }
 
-    async joinProject(project) {
-        try {
-            console.log('Uniéndose al proyecto:', project.title);
-            alert(`¡Te has unido al proyecto: ${project.title}!`);
-        } catch (error) {
-            console.error('Error al unirse al proyecto:', error);
+    /**
+     * Marca un proyecto como visualizado para evitar repeticiones.
+     */
+    markProjectAsViewed(projectId) {
+        if (projectId) {
+            this.viewedProjects.add(projectId);
         }
     }
 
-    async searchProjects(query) {
-        try {
-            const response = await fetch(`${this.apiUrl}/search?q=${encodeURIComponent(query)}`);
-            const filteredProjects = await response.json();
-            this.projects = filteredProjects;
-            this.resetViewedProjects();
-            this.currentProjectIndex = 0;
-            this.eventHandlersAttached = false; // Reset flag
-            this.renderCurrentProject();
-        } catch (error) {
-            console.error('Error en búsqueda:', error);
-        }
+    getNextUnviewedProject() {
+        return this.projects.find((project) => !this.viewedProjects.has(project.id)) || null;
     }
 
-    async getProjectById(id) {
-        try {
-            const response = await fetch(`${this.apiUrl}/${id}`);
-            return await response.json();
-        } catch (error) {
-            console.error('Error obteniendo proyecto:', error);
-            return null;
-        }
+    getCurrentProject() {
+        return this.projects[this.currentProjectIndex] || null;
     }
 
-    handleCardSwipe(direction) {
-        if (this.projects.length === 0) return;
-        
-        if (direction === 'left' || direction === 'right') {
-            console.log(`Carta deslizada hacia ${direction}, marcando como visto y cargando siguiente...`);
+    nextProject() {
+        if (this.projects.length === 0) {
+            return;
+        }
+
+        this.currentProjectIndex = (this.currentProjectIndex + 1) % this.projects.length;
+        const project = this.getCurrentProject();
+        this.updateProjectCard(project);
+        this.updateExpandedCard(project);
+        this.markProjectAsViewed(project.id);
+    }
+
+    previousProject() {
+        if (this.projects.length === 0) {
+            return;
+        }
+
+        this.currentProjectIndex = (this.currentProjectIndex - 1 + this.projects.length) % this.projects.length;
+        const project = this.getCurrentProject();
+        this.updateProjectCard(project);
+        this.updateExpandedCard(project);
+    }
+
+    restartProjects() {
+        this.viewedProjects.clear();
+        this.currentProjectIndex = 0;
+        this.renderCurrentProject();
+    }
+
+    /**
+     * Maneja los gestos de swipe que provienen de script.js.
+     */
+    async handleCardSwipe(direction) {
+        const project = this.getCurrentProject();
+        if (!project) {
+            return;
+        }
+
+        if (direction === 'right') {
+            await this.registerLike(project.id);
             this.nextProject();
+        } else if (direction === 'left') {
+            await this.registerDislike(project.id);
+            this.nextProject();
+        } else if (direction === 'up') {
+            this.expandedCard?.classList.remove('hidden');
+            this.expandedCard?.classList.add('visible');
         }
+    }
+
+    async registerLike(projectId) {
+        if (!projectId) {
+            return;
+        }
+
+        try {
+            await window.apiClient.post(`/api/projects/${projectId}/like`);
+        } catch (error) {
+            console.error('No se pudo registrar el like:', error);
+        }
+    }
+
+    async registerDislike(projectId) {
+        if (!projectId) {
+            return;
+        }
+
+        try {
+            await window.apiClient.post(`/api/projects/${projectId}/dislike`);
+        } catch (error) {
+            console.error('No se pudo registrar el dislike:', error);
+        }
+    }
+
+    /**
+     * Permite filtrar proyectos por título, tecnologías o habilidades.
+     */
+    searchProjects(query) {
+        const normalized = (query || '').trim().toLowerCase();
+
+        if (!normalized) {
+            this.projects = [...this.allProjects];
+        } else {
+            this.projects = this.allProjects.filter((project) => {
+                const titleMatch = project.title.toLowerCase().includes(normalized);
+                const techMatch = project.technologies.some((tech) => {
+                    const value = typeof tech === 'string' ? tech : tech?.nombre || '';
+                    return value.toLowerCase().includes(normalized);
+                });
+                const skillMatch = project.skillsNeeded.some((skill) => {
+                    if (typeof skill === 'string') {
+                        return skill.toLowerCase().includes(normalized);
+                    }
+                    const value = `${skill?.nombre || ''} ${skill?.nivel || ''}`;
+                    return value.trim().toLowerCase().includes(normalized);
+                });
+                return titleMatch || techMatch || skillMatch;
+            });
+        }
+
+        this.viewedProjects.clear();
+        this.currentProjectIndex = 0;
+        this.renderCurrentProject();
+    }
+
+    showNoProjectsMessage(message) {
+        if (!this.cardContainer) {
+            return;
+        }
+
+        this.cardContainer.innerHTML = `
+            <div class="empty-state">
+                <h2>${message}</h2>
+                <p>Podés crear un proyecto nuevo con el botón “Crear proyecto”.</p>
+            </div>
+        `;
+        const indicators = document.getElementById('status-indicators');
+        if (indicators) {
+            indicators.style.display = 'none';
+        }
+    }
+
+    showAllProjectsViewedMessage() {
+        if (!this.cardContainer) {
+            return;
+        }
+
+        this.cardContainer.innerHTML = `
+            <div class="all-projects-viewed-message">
+                <div class="all-projects-icon">🎉</div>
+                <h2>¡Ya revisaste todos los proyectos!</h2>
+                <p>Reiniciá el listado para volver a examinarlos o esperá nuevos proyectos.</p>
+                <button class="restart-button" onclick="window.projectsManager.restartProjects()">Verlos nuevamente</button>
+            </div>
+        `;
     }
 
     getViewingStats() {
-        return {
-            total: this.projects.length,
-            viewed: this.viewedProjects.size,
-            remaining: this.projects.length - this.viewedProjects.size,
-            percentage: this.projects.length > 0 ? Math.round((this.viewedProjects.size / this.projects.length) * 100) : 0
-        };
+        const total = this.projects.length;
+        const viewed = this.viewedProjects.size;
+        const remaining = Math.max(total - viewed, 0);
+        const percentage = total > 0 ? Math.round((viewed / total) * 100) : 0;
+        return { total, viewed, remaining, percentage };
+    }
+
+    /**
+     * Agrega un proyecto recién creado sin recargar toda la lista.
+     */
+    addProject(projectResponse) {
+        const normalized = this.normalizeProject(projectResponse);
+        if (!normalized) {
+            return;
+        }
+
+        this.allProjects.unshift(normalized);
+        this.projects = [...this.allProjects];
+        this.viewedProjects.clear();
+        this.currentProjectIndex = 0;
+        this.renderCurrentProject();
     }
 }
 
-// Inicializar el gestor de proyectos cuando el DOM esté listo
+// Instancia global para que otros scripts puedan interactuar.
 document.addEventListener('DOMContentLoaded', () => {
     window.projectsManager = new ProjectsManager();
 });
 
-// Funciones auxiliares para integración
+// Funciones auxiliares utilizadas por otras partes del frontend.
 function loadNextProject() {
-    if (window.projectsManager) {
-        window.projectsManager.nextProject();
-    }
+    window.projectsManager?.nextProject();
 }
 
 function loadPreviousProject() {
-    if (window.projectsManager) {
-        window.projectsManager.previousProject();
-    }
+    window.projectsManager?.previousProject();
 }
 
-function refreshProject() {
-    if (window.projectsManager) {
-        window.projectsManager.previousProject();
-    }
+function refreshProjectList() {
+    window.projectsManager?.restartProjects();
 }
 
 function handleSwipe(direction) {
-    if (window.projectsManager) {
-        window.projectsManager.handleCardSwipe(direction);
-    }
+    window.projectsManager?.handleCardSwipe(direction);
 }
 
 function getViewingStats() {
-    if (window.projectsManager) {
-        return window.projectsManager.getViewingStats();
-    }
-    return null;
+    return window.projectsManager?.getViewingStats() ?? null;
 }
