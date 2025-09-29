@@ -1,10 +1,7 @@
 Integrantes: 
 
-- Juan Cruz Palacios (Lider)
+- Juan Cruz Palacios 
 - Ezequiel Abelle
-- Matias Budani
-- Ivan Trovato
-- Rocco Nieva Canducci
 
 Para que el programa funcione es necesario instalar la libreria incluida en el archivo requirements.txt
 
