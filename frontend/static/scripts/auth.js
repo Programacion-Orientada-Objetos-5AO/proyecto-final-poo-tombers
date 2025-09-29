@@ -5,9 +5,11 @@ class AuthManager {
     constructor() {
         this.loginForm = document.getElementById('loginForm');
         this.registerForm = document.getElementById('registerForm');
+        this.formsContainer = document.querySelector('.auth-forms');
         this.passwordStrength = document.getElementById('passwordStrength');
         this.notification = document.getElementById('notification');
         this.loadingOverlay = document.getElementById('loadingOverlay');
+        this.notificationTimeout = null;
         this.init();
     }
 
@@ -27,6 +29,13 @@ class AuthManager {
 
         this.registerEventListeners();
         this.registerRealtimeValidation();
+        this.bindToggleButtons();
+        const initialForm = this.resolveInitialForm();
+        if (initialForm === 'register') {
+            this.showRegisterForm();
+        } else {
+            this.showLoginForm();
+        }
         this.hideNotification();
     }
 
@@ -40,6 +49,100 @@ class AuthManager {
 
         if (this.registerForm) {
             this.registerForm.addEventListener('submit', (event) => this.handleRegister(event));
+        }
+    }
+
+    /**
+     * Asocia los botones que alternan entre login y registro.
+     */
+    bindToggleButtons() {
+        const registerButtons = document.querySelectorAll('[data-auth-toggle="register"]');
+        registerButtons.forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                this.showRegisterForm();
+            });
+        });
+
+        const loginButtons = document.querySelectorAll('[data-auth-toggle="login"]');
+        loginButtons.forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                this.showLoginForm();
+            });
+        });
+    }
+
+    /**
+     * Determina qué formulario se debe mostrar inicialmente.
+     */
+    resolveInitialForm() {
+        const params = new URLSearchParams(window.location.search);
+        const viewParam = (params.get('auth') || params.get('view') || '').toLowerCase();
+        if (viewParam === 'register') {
+            return 'register';
+        }
+
+        const hash = (window.location.hash || '').replace('#', '').toLowerCase();
+        if (hash === 'register') {
+            return 'register';
+        }
+
+        return 'login';
+    }
+
+    /**
+     * Cambia el formulario activo y actualiza los estados visuales.
+     */
+    setActiveForm(target) {
+        const normalized = target === 'register' ? 'register' : 'login';
+        const showRegister = normalized === 'register';
+
+        this.clearErrors();
+
+        if (this.loginForm) {
+            this.loginForm.classList.toggle('active', !showRegister);
+            this.loginForm.setAttribute('aria-hidden', showRegister ? 'true' : 'false');
+        }
+
+        if (this.registerForm) {
+            this.registerForm.classList.toggle('active', showRegister);
+            this.registerForm.setAttribute('aria-hidden', showRegister ? 'false' : 'true');
+        }
+
+        if (this.formsContainer) {
+            this.formsContainer.classList.toggle('login-active', !showRegister);
+            this.formsContainer.classList.toggle('register-active', showRegister);
+            this.formsContainer.setAttribute('data-current-form', normalized);
+        }
+
+        this.resetPasswordStrength();
+    }
+
+    /**
+     * Muestra el formulario de acceso.
+     */
+    showLoginForm() {
+        this.setActiveForm('login');
+        const firstInput = this.loginForm?.querySelector('input, select, textarea');
+        firstInput?.focus();
+    }
+
+    /**
+     * Muestra el formulario de registro.
+     */
+    showRegisterForm() {
+        this.setActiveForm('register');
+        const firstInput = this.registerForm?.querySelector('input, select, textarea');
+        firstInput?.focus();
+    }
+
+    /**
+     * Limpia el indicador de fortaleza de contraseña.
+     */
+    resetPasswordStrength() {
+        if (this.passwordStrength) {
+            this.passwordStrength.textContent = '';
         }
     }
 
@@ -84,7 +187,7 @@ class AuthManager {
                 window.location.href = '/feed';
             }, 1200);
         } catch (error) {
-            const message = error?.message || 'No fue posible iniciar sesión.';
+            const message = error?.data?.detail || error?.message || 'No fue posible iniciar sesión.';
             this.showNotification(message, 'error');
             this.setFieldError('loginEmailError', message);
             this.setFieldError('loginPasswordError', message);
@@ -135,10 +238,45 @@ class AuthManager {
                 window.location.href = '/feed';
             }, 1500);
         } catch (error) {
-            const message = error?.message || 'No fue posible crear la cuenta.';
+            const message = error?.data?.detail || error?.message || 'No fue posible crear la cuenta.';
             this.showNotification(message, 'error');
+            this.applyRegisterErrors(error);
         } finally {
             this.toggleLoading(false);
+        }
+    }
+
+    /**
+     * Marca los campos del registro que provienen de errores del backend.
+     */
+    applyRegisterErrors(error) {
+        const fieldMap = {
+            firstName: 'firstNameError',
+            lastName: 'lastNameError',
+            email: 'registerEmailError',
+            username: 'usernameError',
+            password: 'registerPasswordError',
+            confirmPassword: 'confirmPasswordError',
+        };
+
+        const backendErrors = error?.data?.errores || error?.data?.errors;
+        if (backendErrors && typeof backendErrors === 'object') {
+            Object.entries(backendErrors).forEach(([field, detail]) => {
+                const targetId = fieldMap[field] || `${field}Error`;
+                const message = Array.isArray(detail) ? detail.join(' ') : detail;
+                if (typeof message === 'string') {
+                    this.setFieldError(targetId, message);
+                }
+            });
+            return;
+        }
+
+        const fallbackMessage = error?.message || '';
+        if (/email/i.test(fallbackMessage)) {
+            this.setFieldError('registerEmailError', fallbackMessage);
+        }
+        if (/(usuario|username)/i.test(fallbackMessage)) {
+            this.setFieldError('usernameError', fallbackMessage);
         }
     }
 
@@ -310,10 +448,10 @@ class AuthManager {
         const messageElement = this.notification.querySelector('.notification-message');
 
         const icons = {
-            success: '✔️',
-            error: '❌',
-            warning: '⚠️',
-            info: 'ℹ️',
+            success: '✔',
+            error: '✖',
+            warning: '⚠',
+            info: 'ℹ',
         };
 
         if (messageElement) {
@@ -376,13 +514,11 @@ class AuthManager {
 
 // Funciones globales utilizadas desde el HTML
 function showLogin() {
-    document.getElementById('loginForm')?.classList.add('active');
-    document.getElementById('registerForm')?.classList.remove('active');
+    window.authManager?.showLoginForm();
 }
 
 function showRegister() {
-    document.getElementById('registerForm')?.classList.add('active');
-    document.getElementById('loginForm')?.classList.remove('active');
+    window.authManager?.showRegisterForm();
 }
 
 function togglePassword(inputId) {

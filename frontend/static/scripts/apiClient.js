@@ -74,10 +74,11 @@
         }
 
         const response = await fetch(`${API_BASE_URL}${path}`, config);
-        const contentType = response.headers.get('content-type') || '';
+        const contentTypeHeader = response.headers.get('content-type') || '';
+        const isJsonResponse = contentTypeHeader.toLowerCase().includes('json');
         let payload = null;
 
-        if (contentType.includes('application/json')) {
+        if (isJsonResponse) {
             try {
                 payload = await response.json();
             } catch (error) {
@@ -95,7 +96,8 @@
                 }
             }
 
-            const message = (payload && (payload.message || payload.error)) || 'Error al comunicarse con el backend';
+            const resolvedMessage = payload && (payload.detail || payload.message || payload.error);
+            const message = resolvedMessage || 'Error al comunicarse con el backend';
             const error = new Error(message);
             error.status = response.status;
             error.data = payload;
