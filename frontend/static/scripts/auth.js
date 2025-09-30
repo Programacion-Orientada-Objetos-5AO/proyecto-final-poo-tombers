@@ -203,6 +203,7 @@ class AuthManager {
         event.preventDefault();
 
         if (!this.validateRegisterForm()) {
+            this.showNotification('Completá todos los campos requeridos, corregí los errores y aceptá los términos.', 'error');
             return;
         }
 
@@ -311,6 +312,11 @@ class AuthManager {
                 valid = false;
             }
         });
+
+        const termsCheckbox = document.getElementById('acceptTerms');
+        if (!termsCheckbox || !termsCheckbox.checked) {
+            valid = false;
+        }
 
         if (!this.validateEmail()) {
             valid = false;
