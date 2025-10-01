@@ -1,7 +1,7 @@
 // Archivo: scripts/projects.js
 // Obtiene proyectos desde el backend y actualiza las vistas del panel principal.
 
-// Utility to resolve API-hosted asset URLs.
+// Utilidad para construir URLs publicas de recursos alojados en el backend.
 const resolveAssetUrl = (path) => {
     if (!path) {
         return null;

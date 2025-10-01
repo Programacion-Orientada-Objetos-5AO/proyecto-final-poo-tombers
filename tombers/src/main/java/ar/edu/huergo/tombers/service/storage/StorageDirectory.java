@@ -1,10 +1,10 @@
-package ar.edu.huergo.tombers.service.storage;
+﻿package ar.edu.huergo.tombers.service.storage;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Logical directories used to organize stored files.
+ * Directorios logicos utilizados para organizar los archivos almacenados.
  */
 @Getter
 @RequiredArgsConstructor

@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Stores files on the local filesystem keeping public URLs consistent.
+ * Almacena archivos en el sistema de archivos local y mantiene consistentes las URLs publicas.
  */
 @Slf4j
 @Service

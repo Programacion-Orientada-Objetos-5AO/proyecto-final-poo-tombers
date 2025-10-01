@@ -10,7 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Maps the storage directories to public URLs so the frontend can reach them.
+ * Expone los directorios de almacenamiento como recursos publicos para que el frontend acceda a ellos.
  */
 @Configuration
 @RequiredArgsConstructor

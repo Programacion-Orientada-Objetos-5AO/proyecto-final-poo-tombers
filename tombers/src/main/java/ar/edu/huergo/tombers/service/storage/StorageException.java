@@ -1,7 +1,7 @@
-package ar.edu.huergo.tombers.service.storage;
+﻿package ar.edu.huergo.tombers.service.storage;
 
 /**
- * Custom exception thrown when there is a problem handling stored files.
+ * Excepcion personalizada para problemas al manipular archivos almacenados.
  */
 public class StorageException extends RuntimeException {
 

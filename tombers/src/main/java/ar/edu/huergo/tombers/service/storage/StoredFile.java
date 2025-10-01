@@ -1,7 +1,7 @@
-package ar.edu.huergo.tombers.service.storage;
+﻿package ar.edu.huergo.tombers.service.storage;
 
 /**
- * Information about a file stored on disk.
+ * Informacion sobre un archivo almacenado en disco.
  */
 public record StoredFile(String relativePath, String publicUrl) {
 }

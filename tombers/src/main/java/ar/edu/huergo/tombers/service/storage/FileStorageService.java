@@ -1,35 +1,35 @@
-package ar.edu.huergo.tombers.service.storage;
+﻿package ar.edu.huergo.tombers.service.storage;
 
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Contract for storing binary files and exposing public URLs.
+ * Contrato para guardar archivos binarios y exponer sus URLs publicas.
  */
 public interface FileStorageService {
 
     /**
-     * Stores a file under the provided logical directory and returns metadata.
+     * Guarda un archivo en el directorio logico indicado y devuelve sus metadatos.
      */
     StoredFile store(MultipartFile file, StorageDirectory directory);
 
     /**
-     * Deletes a file using its relative path from the storage root.
+     * Elimina un archivo utilizando su ruta relativa dentro del almacenamiento.
      */
     void delete(String relativePath);
 
     /**
-     * Converts a relative path into a public URL.
+     * Convierte una ruta relativa en una URL publica.
      */
     String toPublicUrl(String relativePath);
 
     /**
-     * Converts a public URL back into the relative path stored on disk.
+     * Convierte una URL publica nuevamente en su ruta relativa en disco.
      */
     String toRelativePath(String publicUrl);
 
     /**
-     * Deletes a file referenced by its public URL if it exists.
+     * Elimina el archivo referenciado por una URL publica si existe.
      */
     default void deleteByPublicUrl(String publicUrl) {
         if (!StringUtils.hasText(publicUrl)) {

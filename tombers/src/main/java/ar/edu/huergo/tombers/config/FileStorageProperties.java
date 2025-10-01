@@ -1,4 +1,4 @@
-package ar.edu.huergo.tombers.config;
+﻿package ar.edu.huergo.tombers.config;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Storage related configuration properties.
+ * Propiedades de configuracion para el almacenamiento de archivos.
  */
 @Getter
 @Setter
@@ -27,7 +27,7 @@ public class FileStorageProperties {
     @NotNull
     private String publicUrlPrefix = "/uploads/";
 
-    private long maxFileSize = 5 * 1024 * 1024; // 5MB
+    private long maxFileSize = 5 * 1024 * 1024; // 5 MB
 
     private List<String> allowedContentTypes = new ArrayList<>(List.of(
             "image/jpeg",
@@ -36,14 +36,14 @@ public class FileStorageProperties {
     ));
 
     /**
-     * Returns the normalized root path where files will be stored.
+     * Devuelve la ruta raiz normalizada donde se guardaran los archivos.
      */
     public Path getRootLocation() {
         return rootLocation.toAbsolutePath().normalize();
     }
 
     /**
-     * Returns the public URL prefix ensuring it uses /prefix/ format.
+     * Devuelve el prefijo de URL publica garantizando el formato /prefijo/.
      */
     public String getPublicUrlPrefix() {
         String prefix = publicUrlPrefix == null ? "" : publicUrlPrefix.trim();
@@ -60,7 +60,7 @@ public class FileStorageProperties {
     }
 
     /**
-     * Replaces allowed content types fallback to defaults when empty.
+     * Reemplaza la lista de tipos permitidos y vuelve a los valores por defecto si esta vacia.
      */
     public void setAllowedContentTypes(List<String> allowedContentTypes) {
         if (allowedContentTypes == null || allowedContentTypes.isEmpty()) {
