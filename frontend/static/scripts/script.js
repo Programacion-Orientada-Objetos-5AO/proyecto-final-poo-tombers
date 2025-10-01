@@ -1,6 +1,35 @@
 ﻿// Archivo: static/scripts/script.js
 // Maneja las interacciones visuales del feed (swipe de tarjetas y modal de creación de proyectos).
 
+// Muestra mensajes emergentes en pantalla.
+const showToastMessage = (mensaje, tipo = 'info') => {
+    const colores = {
+        exito: '#16a34a',
+        error: '#dc2626',
+        info: '#2563eb',
+        aviso: '#ca8a04'
+    };
+    const fondo = colores[tipo] || colores.info;
+    const aviso = document.createElement('div');
+    aviso.textContent = mensaje;
+    aviso.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 12000;
+        background: ${fondo};
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+        font-size: 14px;
+        max-width: 280px;
+        line-height: 1.4;
+    `;
+    document.body.appendChild(aviso);
+    setTimeout(() => aviso.remove(), 4000);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const expandedCard = document.getElementById('expanded-card');
     const closeExpanded = document.getElementById('close-expanded');
@@ -157,19 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
     createForm?.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (!window.apiClient) {
-            alert('No se puede acceder al servidor.');
+            showToastMessage('No se puede acceder al servidor.', 'error');
             return;
         }
 
         const payload = buildProjectPayload();
         if (!payload.title || !payload.description) {
-            alert('Completa al menos el nombre y la descripcion.');
+            showToastMessage('Completa al menos el nombre y la descripcion.', 'aviso');
             return;
         }
 
         const bannerFile = projectImageInput?.files?.[0];
         if (!bannerFile) {
-            alert('Selecciona un banner para el proyecto.');
+            showToastMessage('Selecciona un banner para el proyecto.', 'aviso');
             return;
         }
 
@@ -180,11 +209,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const created = await window.apiClient.post('/api/projects', formData);
             window.projectsManager?.addProject(created);
-            alert('Proyecto creado correctamente.');
+            showToastMessage('Proyecto creado correctamente.', 'exito');
             closeCreateModal();
         } catch (error) {
             const message = error?.message || 'No se pudo crear el proyecto.';
-            alert(message);
+            showToastMessage(message, 'error');
         }
     });
 

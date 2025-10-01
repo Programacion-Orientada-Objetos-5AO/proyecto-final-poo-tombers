@@ -75,14 +75,20 @@ class ProfileManager {
         const fullName = `${this.profile.firstName || ''} ${this.profile.lastName || ''}`.trim() || 'Usuario sin nombre';
         const status = (this.profile.status || 'AVAILABLE').toString();
 
-        const pictureUrl = this.resolveAsset(this.profile.profilePictureUrl) || '/static/imagenes/logoTomberS.png';
+        const pictureUrl = this.resolveAsset(this.profile.profilePictureUrl) || '/static/imagenes/profile-placeholder.svg';
         const cardImage = this.projectCard?.querySelector('.user-card-image');
         if (cardImage) {
             cardImage.style.backgroundImage = `url('${pictureUrl}')`;
+            cardImage.style.backgroundSize = 'cover';
+            cardImage.style.backgroundPosition = 'center';
+            cardImage.style.backgroundRepeat = 'no-repeat';
         }
         const expandedImage = this.expandedCard?.querySelector('.expanded-left .user-card-image');
         if (expandedImage) {
             expandedImage.style.backgroundImage = `url('${pictureUrl}')`;
+            expandedImage.style.backgroundSize = 'cover';
+            expandedImage.style.backgroundPosition = 'center';
+            expandedImage.style.backgroundRepeat = 'no-repeat';
         }
 
         const cardTitle = this.projectCard?.querySelector('.card-title');
@@ -287,7 +293,7 @@ class ProfileManager {
         imageLabel.style.fontSize = '14px';
 
         const imagePreview = document.createElement('img');
-        imagePreview.src = this.resolveAsset(this.profile?.profilePictureUrl) || '/static/imagenes/logoTomberS.png';
+        imagePreview.src = this.resolveAsset(this.profile?.profilePictureUrl) || '/static/imagenes/profile-placeholder.svg';
         imagePreview.alt = 'Vista previa de la foto de perfil';
         imagePreview.style.width = '96px';
         imagePreview.style.height = '96px';
@@ -306,7 +312,7 @@ class ProfileManager {
         imageInput.addEventListener('change', (event) => {
             const file = event.target.files?.[0];
             if (!file) {
-                imagePreview.src = this.resolveAsset(this.profile?.profilePictureUrl) || '/static/imagenes/logoTomberS.png';
+                imagePreview.src = this.resolveAsset(this.profile?.profilePictureUrl) || '/static/imagenes/profile-placeholder.svg';
                 return;
             }
             const reader = new FileReader();
