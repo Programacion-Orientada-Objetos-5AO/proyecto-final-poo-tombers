@@ -11,11 +11,11 @@ import lombok.Data;
 @Data
 public class ProjectCreateRequest {
     
-    @NotBlank(message = "El título es requerido")
-    @Size(max = 255, message = "El título no puede exceder 255 caracteres")
+    @NotBlank(message = "El tÃ­tulo es requerido")
+    @Size(max = 255, message = "El tÃ­tulo no puede exceder 255 caracteres")
     private String title;
     
-    @NotBlank(message = "La descripción es requerida")
+    @NotBlank(message = "La descripciÃ³n es requerida")
     private String description;
     
     @Size(max = 100, message = "El tipo no puede exceder 100 caracteres")
@@ -24,10 +24,9 @@ public class ProjectCreateRequest {
     @Size(max = 100, message = "El lenguaje no puede exceder 100 caracteres")
     private String language;
     
-    @Size(max = 100, message = "La duración no puede exceder 100 caracteres")
+    @Size(max = 100, message = "La duraciÃ³n no puede exceder 100 caracteres")
     private String duration;
     
-    private String imageUrl;
     
     @NotNull(message = "El estado es requerido")
     private ProjectStatus status;

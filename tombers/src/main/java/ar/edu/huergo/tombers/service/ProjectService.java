@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import ar.edu.huergo.tombers.dto.project.InterestedUsersResponse;
 import ar.edu.huergo.tombers.dto.project.ManageInterestedRequest;
@@ -19,6 +20,10 @@ import ar.edu.huergo.tombers.mapper.ProjectMapper;
 import ar.edu.huergo.tombers.mapper.UserMapper;
 import ar.edu.huergo.tombers.repository.ProjectRepository;
 import ar.edu.huergo.tombers.repository.UserRepository;
+
+import ar.edu.huergo.tombers.service.storage.FileStorageService;
+import ar.edu.huergo.tombers.service.storage.StorageDirectory;
+import ar.edu.huergo.tombers.service.storage.StoredFile;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
@@ -30,6 +35,7 @@ public class ProjectService {
     private final ProjectMapper projectMapper;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final FileStorageService fileStorageService;
 
     /**
      * Obtiene una lista de todos los proyectos disponibles en el sistema.
@@ -44,7 +50,7 @@ public class ProjectService {
     }
 
     /**
-     * Obtiene un proyecto específico por su identificador.
+     * Obtiene un proyecto especÃ­fico por su identificador.
      *
      * @param id el identificador del proyecto
      * @return un objeto ProjectResponse que representa el proyecto encontrado
@@ -59,17 +65,23 @@ public class ProjectService {
     /**
      * Crea un nuevo proyecto basado en la solicitud proporcionada.
      *
-     * @param request la solicitud de creación del proyecto
+     * @param request la solicitud de creacion del proyecto
+     * @param bannerFile archivo con el banner del proyecto
      * @return un objeto ProjectResponse que representa el proyecto creado
      */
-    public ProjectResponse createProject(ProjectCreateRequest request) {
+    public ProjectResponse createProject(ProjectCreateRequest request, MultipartFile bannerFile) {
+        if (bannerFile == null || bannerFile.isEmpty()) {
+            throw new IllegalArgumentException("El banner del proyecto es obligatorio");
+        }
+
         Project project = projectMapper.toEntity(request);
+        StoredFile storedBanner = fileStorageService.store(bannerFile, StorageDirectory.PROJECT_BANNER);
+        project.setBannerUrl(storedBanner.publicUrl());
         project.setCreatedAt(LocalDate.now());
         project.setUpdatedAt(LocalDate.now());
 
         Project savedProject = projectRepository.save(project);
 
-        // Agregar el ID del proyecto a la lista de proyectos creados del usuario autenticado
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
@@ -83,19 +95,31 @@ public class ProjectService {
     }
 
     /**
-     * Actualiza un proyecto existente con la información proporcionada.
+     * Actualiza un proyecto existente con la informacion proporcionada.
      *
      * @param id el identificador del proyecto a actualizar
-     * @param request la solicitud de actualización del proyecto
+     * @param request la solicitud de actualizacion del proyecto
+     * @param bannerFile archivo opcional con un nuevo banner para el proyecto
      * @return un objeto ProjectResponse que representa el proyecto actualizado
      * @throws EntityNotFoundException si el proyecto no existe
      */
-    public ProjectResponse updateProject(Long id, ProjectCreateRequest request) {
+    public ProjectResponse updateProject(Long id, ProjectCreateRequest request, MultipartFile bannerFile) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
 
+        String previousBannerUrl = project.getBannerUrl();
+
         projectMapper.updateEntity(project, request);
         project.setUpdatedAt(LocalDate.now());
+
+        if (bannerFile != null && !bannerFile.isEmpty()) {
+            StoredFile storedBanner = fileStorageService.store(bannerFile, StorageDirectory.PROJECT_BANNER);
+            String newBannerUrl = storedBanner.publicUrl();
+            project.setBannerUrl(newBannerUrl);
+            if (previousBannerUrl != null && !previousBannerUrl.equals(newBannerUrl)) {
+                fileStorageService.deleteByPublicUrl(previousBannerUrl);
+            }
+        }
 
         Project updatedProject = projectRepository.save(project);
         return projectMapper.toResponse(updatedProject);
@@ -108,16 +132,15 @@ public class ProjectService {
      * @throws EntityNotFoundException si el proyecto no existe
      */
     public void deleteProject(Long id) {
-        // Obtener el usuario autenticado
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
-        // Verificar si el proyecto existe
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
 
-        // Verificar si el usuario es admin o dueño del proyecto
+        String projectBannerUrl = project.getBannerUrl();
+
         boolean isAdmin = user.getRoles().stream()
                 .anyMatch(role -> role.getNombre().equalsIgnoreCase("ADMIN"));
         boolean isOwner = user.getCreatedProjectIds() != null && user.getCreatedProjectIds().contains(id);
@@ -127,6 +150,7 @@ public class ProjectService {
         }
 
         projectRepository.deleteById(id);
+        fileStorageService.deleteByPublicUrl(projectBannerUrl);
     }
 
     /**
@@ -338,10 +362,10 @@ public class ProjectService {
      * Si rechaza: se remueve el like del usuario.
      *
      * @param projectId el identificador del proyecto
-     * @param request DTO con el ID del usuario y la acción (ACCEPT/REJECT)
+     * @param request DTO con el ID del usuario y la acciÃ³n (ACCEPT/REJECT)
      * @throws EntityNotFoundException si el proyecto o usuario no existen
      * @throws AccessDeniedException si el usuario no es el creador o admin del proyecto
-     * @throws IllegalArgumentException si el usuario no está en la lista de interesados
+     * @throws IllegalArgumentException si el usuario no estÃ¡ en la lista de interesados
      */
     public void manageInterestedUser(Long projectId, ManageInterestedRequest request) {
         // Obtener el usuario autenticado
@@ -364,9 +388,9 @@ public class ProjectService {
         User interestedUser = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("Usuario interesado no encontrado"));
 
-        // Verificar que el usuario esté en la lista de interesados
+        // Verificar que el usuario estÃ© en la lista de interesados
         if (project.getLikeIds() == null || !project.getLikeIds().contains(request.getUserId())) {
-            throw new IllegalArgumentException("El usuario no está en la lista de interesados de este proyecto");
+            throw new IllegalArgumentException("El usuario no estÃ¡ en la lista de interesados de este proyecto");
         }
 
         if (request.getAction() == ManageInterestedRequest.Action.ACCEPT) {
@@ -404,7 +428,7 @@ public class ProjectService {
     }
 
     /**
-     * Método auxiliar para obtener el email del usuario autenticado con validaciones adicionales
+     * MÃ©todo auxiliar para obtener el email del usuario autenticado con validaciones adicionales
      */
     private String getAuthenticatedUserEmail() {
         try {
@@ -423,7 +447,7 @@ public class ProjectService {
     }
 
     /**
-     * Método auxiliar para verificar si un usuario es dueño de un proyecto
+     * MÃ©todo auxiliar para verificar si un usuario es dueÃ±o de un proyecto
      */
     private boolean isUserOwnerOfProject(User user, Long projectId) {
         if (user == null || projectId == null) {
@@ -439,7 +463,7 @@ public class ProjectService {
     }
 
     /**
-     * Método auxiliar para verificar si un usuario es dueño de un proyecto o admin
+     * MÃ©todo auxiliar para verificar si un usuario es dueÃ±o de un proyecto o admin
      */
     private boolean isUserOwnerOrAdmin(User user, Long projectId) {
         if (user == null || projectId == null) {
@@ -450,12 +474,19 @@ public class ProjectService {
         boolean isAdmin = user.getRoles().stream()
                 .anyMatch(role -> "ADMIN".equalsIgnoreCase(role.getNombre()));
 
-        // Verificar si el usuario es dueño del proyecto
+        // Verificar si el usuario es dueÃ±o del proyecto
         boolean isOwner = user.getCreatedProjectIds() != null && user.getCreatedProjectIds().contains(projectId);
 
         return isAdmin || isOwner;
     }
 
 }
+
+
+
+
+
+
+
 
 

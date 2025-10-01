@@ -41,8 +41,8 @@ public class Project {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Column(name = "banner_url", nullable = false)
+    private String bannerUrl;
 
     private Integer teamCurrent;
     private Integer teamMax;
@@ -85,3 +85,5 @@ public class Project {
         ACTIVE, INACTIVE, COMPLETED, ON_HOLD
     }
 }
+
+

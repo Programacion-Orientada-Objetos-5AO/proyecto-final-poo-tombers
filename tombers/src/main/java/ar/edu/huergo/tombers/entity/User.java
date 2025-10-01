@@ -126,6 +126,12 @@ public class User implements UserDetails {
      * Enlace a GitHub del usuario.
      */
     private String github;
+    
+    /**
+     * Public URL to the user profile picture.
+     */
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;
 
     /**
      * Enlace al portafolio del usuario.

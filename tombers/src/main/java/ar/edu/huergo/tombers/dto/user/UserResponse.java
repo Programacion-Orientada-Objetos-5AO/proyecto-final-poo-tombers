@@ -29,6 +29,7 @@ public class UserResponse {
     private String phone;
     private String linkedin;
     private String github;
+    private String profilePictureUrl;
     private String portfolio;
     private String bio;
     private User.UserStatus status;

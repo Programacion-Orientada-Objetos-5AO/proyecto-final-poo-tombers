@@ -147,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
             language: language || 'Español',
             type: type || 'General',
             duration: duration || null,
-            imageUrl: selectedImageDataUrl,
             teamMax,
             technologies,
             objectives: [],
@@ -164,12 +163,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const payload = buildProjectPayload();
         if (!payload.title || !payload.description) {
-            alert('Completá al menos el nombre y la descripción.');
+            alert('Completa al menos el nombre y la descripcion.');
             return;
         }
 
+        const bannerFile = projectImageInput?.files?.[0];
+        if (!bannerFile) {
+            alert('Selecciona un banner para el proyecto.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('data', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+        formData.append('banner', bannerFile);
+
         try {
-            const created = await window.apiClient.post('/api/projects', payload);
+            const created = await window.apiClient.post('/api/projects', formData);
             window.projectsManager?.addProject(created);
             alert('Proyecto creado correctamente.');
             closeCreateModal();
@@ -288,3 +297,8 @@ document.addEventListener('DOMContentLoaded', () => {
         projectCard.style.opacity = '1';
     }
 });
+
+
+
+
+

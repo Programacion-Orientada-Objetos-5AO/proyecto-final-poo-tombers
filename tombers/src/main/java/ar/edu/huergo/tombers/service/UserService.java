@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import ar.edu.huergo.tombers.dto.user.UserResponse;
 import ar.edu.huergo.tombers.dto.user.UserUpdateRequest;
@@ -12,6 +13,10 @@ import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.mapper.UserMapper;
 import ar.edu.huergo.tombers.repository.UserRepository;
 import ar.edu.huergo.tombers.repository.security.RolRepository;
+
+import ar.edu.huergo.tombers.service.storage.FileStorageService;
+import ar.edu.huergo.tombers.service.storage.StorageDirectory;
+import ar.edu.huergo.tombers.service.storage.StoredFile;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +26,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final FileStorageService fileStorageService;
     private final RolRepository rolRepository;
 
     public List<UserResponse> getAllUsers() {
@@ -43,23 +49,37 @@ public class UserService {
         return userMapper.toDto(user);
     }
 
-    /**
-     * Actualiza el perfil de un usuario con la información proporcionada.
+        /**
+     * Actualiza el perfil de un usuario con la informacion proporcionada.
      *
      * @param email el email del usuario
-     * @param request la solicitud de actualización del perfil
+     * @param request la solicitud de actualizacion del perfil
+     * @param profilePicture archivo opcional con la nueva foto de perfil
      * @return un objeto UserResponse que representa el perfil actualizado
      * @throws EntityNotFoundException si el usuario no existe
      */
-    public UserResponse updateUserProfile(String email, UserUpdateRequest request) {
+    public UserResponse updateUserProfile(String email, UserUpdateRequest request, MultipartFile profilePicture) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + email));
 
         userMapper.updateEntity(user, request);
+
+        if (profilePicture != null && !profilePicture.isEmpty()) {
+            String previousProfilePicture = user.getProfilePictureUrl();
+            StoredFile storedFile = fileStorageService.store(profilePicture, StorageDirectory.USER_PROFILE);
+            String newProfileUrl = storedFile.publicUrl();
+            user.setProfilePictureUrl(newProfileUrl);
+            if (previousProfilePicture != null && !previousProfilePicture.equals(newProfileUrl)) {
+                fileStorageService.deleteByPublicUrl(previousProfilePicture);
+            }
+        }
+
         User updatedUser = userRepository.save(user);
 
         return userMapper.toDto(updatedUser);
     }
+
+
 
     /**
      * Crea un perfil de usuario y le asigna un rol.

@@ -22,7 +22,7 @@ import ar.edu.huergo.tombers.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Configuración de seguridad para la aplicación utilizando Spring Security.
+ * ConfiguraciÃ³n de seguridad para la aplicaciÃ³n utilizando Spring Security.
  * Define la cadena de filtros de seguridad, CORS y autorizaciones de endpoints.
  */
 @Configuration
@@ -36,12 +36,12 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     /**
-     * Configura la cadena de filtros de seguridad para la aplicación.
+     * Configura la cadena de filtros de seguridad para la aplicaciÃ³n.
      * Deshabilita CSRF, configura CORS, define autorizaciones de endpoints,
-     * establece política de sesiones sin estado y agrega filtros JWT.
+     * establece polÃ­tica de sesiones sin estado y agrega filtros JWT.
      * @param http El objeto HttpSecurity para configurar la seguridad.
      * @return La SecurityFilterChain configurada.
-     * @throws Exception Si ocurre un error durante la configuración.
+     * @throws Exception Si ocurre un error durante la configuraciÃ³n.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -49,7 +49,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/static/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/").permitAll()
@@ -72,8 +72,8 @@ public class SecurityConfig {
     }
 
     /**
-     * Configura la fuente de configuración CORS para permitir solicitudes desde cualquier origen.
-     * Permite métodos HTTP comunes y credenciales.
+     * Configura la fuente de configuraciÃ³n CORS para permitir solicitudes desde cualquier origen.
+     * Permite mÃ©todos HTTP comunes y credenciales.
      * @return Una CorsConfigurationSource configurada.
      */
     @Bean
@@ -89,3 +89,4 @@ public class SecurityConfig {
         return source;
     }
 }
+

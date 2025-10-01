@@ -58,6 +58,16 @@ class ProfileManager {
         const fullName = `${this.profile.firstName || ''} ${this.profile.lastName || ''}`.trim() || 'Usuario sin nombre';
         const status = (this.profile.status || 'AVAILABLE').toString();
 
+        const pictureUrl = this.profile.profilePictureUrl || '/static/imagenes/logoTomberS.png';
+        const cardImage = this.projectCard?.querySelector('.user-card-image');
+        if (cardImage) {
+            cardImage.style.backgroundImage = `url('${pictureUrl}')`;
+        }
+        const expandedImage = this.expandedCard?.querySelector('.expanded-left .user-card-image');
+        if (expandedImage) {
+            expandedImage.style.backgroundImage = `url('${pictureUrl}')`;
+        }
+
         const cardTitle = this.projectCard?.querySelector('.card-title');
         if (cardTitle) {
             cardTitle.textContent = fullName;
@@ -250,7 +260,49 @@ class ProfileManager {
         const form = document.createElement('form');
         form.style.display = 'flex';
         form.style.flexDirection = 'column';
-        form.style.gap = '12px';
+        const imageSection = document.createElement('div');
+        imageSection.style.display = 'flex';
+        imageSection.style.flexDirection = 'column';
+        imageSection.style.gap = '8px';
+
+        const imageLabel = document.createElement('span');
+        imageLabel.textContent = 'Foto de perfil';
+        imageLabel.style.fontSize = '14px';
+
+        const imagePreview = document.createElement('img');
+        imagePreview.src = this.profile?.profilePictureUrl || '/static/imagenes/logoTomberS.png';
+        imagePreview.alt = 'Vista previa de la foto de perfil';
+        imagePreview.style.width = '96px';
+        imagePreview.style.height = '96px';
+        imagePreview.style.objectFit = 'cover';
+        imagePreview.style.borderRadius = '50%';
+        imagePreview.style.border = '1px solid #d0d5dd';
+
+        const imageInput = document.createElement('input');
+        imageInput.type = 'file';
+        imageInput.name = 'profilePicture';
+        imageInput.accept = 'image/*';
+        imageInput.style.padding = '10px';
+        imageInput.style.borderRadius = '8px';
+        imageInput.style.border = '1px solid #d0d5dd';
+
+        imageInput.addEventListener('change', (event) => {
+            const file = event.target.files?.[0];
+            if (!file) {
+                imagePreview.src = this.profile?.profilePictureUrl || '/static/imagenes/logoTomberS.png';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (loadEvent) => {
+                imagePreview.src = loadEvent.target?.result || imagePreview.src;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        imageSection.appendChild(imageLabel);
+        imageSection.appendChild(imagePreview);
+        imageSection.appendChild(imageInput);
+        form.appendChild(imageSection);
 
         const fields = [
             { label: 'Nombre', name: 'firstName', type: 'text', value: this.profile.firstName || '', required: true },
@@ -302,8 +354,17 @@ class ProfileManager {
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
-            const data = this.collectUpdatePayload(new FormData(form));
-            await this.updateProfile(data);
+            const rawFormData = new FormData(form);
+            const payload = this.collectUpdatePayload(rawFormData);
+
+            const request = new FormData();
+            request.append('data', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+            const profilePicture = rawFormData.get('profilePicture');
+            if (profilePicture instanceof File && profilePicture.size > 0) {
+                request.append('profilePicture', profilePicture);
+            }
+
+            await this.updateProfile(request);
             overlay.remove();
         });
 
@@ -391,9 +452,9 @@ class ProfileManager {
         return Number.isNaN(parsed) ? null : parsed;
     }
 
-    async updateProfile(payload) {
+    async updateProfile(formData) {
         try {
-            const updated = await window.apiClient.put('/api/users/profile', payload);
+            const updated = await window.apiClient.put('/api/users/profile', formData);
             this.profile = updated;
             this.renderProfile();
             this.showToast('Perfil actualizado correctamente.', 'success');

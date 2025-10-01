@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.http.MediaType;
 import ar.edu.huergo.tombers.dto.project.InterestedUsersResponse;
 import ar.edu.huergo.tombers.dto.project.ManageInterestedRequest;
 import ar.edu.huergo.tombers.dto.project.ProjectCreateRequest;
@@ -58,11 +61,14 @@ public class ProjectController {
     /**
      * Crea un nuevo proyecto.
      * @param request Datos para crear el proyecto.
-     * @return Proyecto creado en la respuesta HTTP con código 201.
+     * @param banner Archivo de banner requerido para el proyecto.
+     * @return Proyecto creado en la respuesta HTTP con codigo 201.
      */
-    @PostMapping
-    public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody ProjectCreateRequest request) {
-        ProjectResponse project = projectService.createProject(request);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProjectResponse> createProject(
+            @Valid @RequestPart("data") ProjectCreateRequest request,
+            @RequestPart("banner") MultipartFile banner) {
+        ProjectResponse project = projectService.createProject(request, banner);
         return ResponseEntity.status(201).body(project);
     }
 
@@ -70,13 +76,15 @@ public class ProjectController {
      * Actualiza un proyecto existente.
      * @param id Identificador del proyecto a actualizar.
      * @param request Datos actualizados del proyecto.
+     * @param banner Archivo opcional con un nuevo banner.
      * @return Proyecto actualizado en la respuesta HTTP.
      */
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProjectResponse> updateProject(
             @PathVariable Long id,
-            @Valid @RequestBody ProjectCreateRequest request) {
-        ProjectResponse project = projectService.updateProject(id, request);
+            @Valid @RequestPart("data") ProjectCreateRequest request,
+            @RequestPart(value = "banner", required = false) MultipartFile banner) {
+        ProjectResponse project = projectService.updateProject(id, request, banner);
         return ResponseEntity.ok(project);
     }
 

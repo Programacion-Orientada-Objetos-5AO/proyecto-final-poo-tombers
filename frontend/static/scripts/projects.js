@@ -71,7 +71,7 @@ class ProjectsManager {
             id: project.id,
             title: project.title || 'Proyecto sin título',
             description: project.description || 'Sin descripción disponible.',
-            imageUrl: project.imageUrl || '/static/imagenes/coding-foto-ejemplo.jpg',
+            bannerUrl: project.bannerUrl || '/static/imagenes/coding-foto-ejemplo.jpg',
             stats,
             technologies,
             objectives,
@@ -121,7 +121,7 @@ class ProjectsManager {
             description.textContent = project.description;
         }
         if (image) {
-            image.style.backgroundImage = `url('${project.imageUrl}')`;
+            image.style.backgroundImage = `url('${project.bannerUrl}')`;
         }
 
         if (statsText?.length >= 4) {
@@ -164,7 +164,7 @@ class ProjectsManager {
 
         const expandedImage = this.expandedCard.querySelector('.expanded-image img');
         if (expandedImage) {
-            expandedImage.src = project.imageUrl;
+            expandedImage.src = project.bannerUrl;
         }
 
         const statValues = this.expandedCard.querySelectorAll('.stat-value');
@@ -543,3 +543,4 @@ function handleSwipe(direction) {
 function getViewingStats() {
     return window.projectsManager?.getViewingStats() ?? null;
 }
+

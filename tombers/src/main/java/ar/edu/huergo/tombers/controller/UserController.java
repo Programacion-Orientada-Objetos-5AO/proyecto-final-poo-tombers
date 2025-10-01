@@ -1,6 +1,9 @@
 package ar.edu.huergo.tombers.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -49,20 +52,24 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    /**
+        /**
      * Actualiza el perfil del usuario autenticado.
-     * @param authentication Información de autenticación del usuario.
+     * @param authentication Informacion de autenticacion del usuario.
      * @param request Datos para actualizar el perfil.
+     * @param profilePicture Archivo opcional con la nueva fotografia de perfil.
      * @return Perfil actualizado en la respuesta HTTP.
      */
-    @PutMapping("/profile")
+    @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserResponse> updateUserProfile(
             Authentication authentication,
-            @Valid @RequestBody UserUpdateRequest request) {
+            @Valid @RequestPart("data") UserUpdateRequest request,
+            @RequestPart(value = "profilePicture", required = false) MultipartFile profilePicture) {
         String email = authentication.getName();
-        UserResponse response = userService.updateUserProfile(email, request);
+        UserResponse response = userService.updateUserProfile(email, request, profilePicture);
         return ResponseEntity.ok(response);
     }
+
+
 
     /**
      * Crea un perfil de usuario y le asigna un rol.

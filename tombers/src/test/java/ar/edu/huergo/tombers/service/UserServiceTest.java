@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.multipart.MultipartFile;
 
 import ar.edu.huergo.tombers.dto.user.UserResponse;
 import ar.edu.huergo.tombers.dto.user.UserUpdateRequest;
@@ -22,6 +23,9 @@ import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.mapper.UserMapper;
 import ar.edu.huergo.tombers.repository.UserRepository;
 import ar.edu.huergo.tombers.repository.security.RolRepository;
+import ar.edu.huergo.tombers.service.storage.FileStorageService;
+import ar.edu.huergo.tombers.service.storage.StorageDirectory;
+import ar.edu.huergo.tombers.service.storage.StoredFile;
 import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,6 +35,7 @@ class UserServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private UserMapper userMapper;
     @Mock private RolRepository rolRepository;
+    @Mock private FileStorageService fileStorageService;
     @InjectMocks private UserService userService;
 
     private User sampleUser() {
@@ -75,15 +80,42 @@ class UserServiceTest {
         when(userMapper.toDto(user)).thenReturn(UserResponse.builder().email("ana@test.com").build());
 
         var req = new UserUpdateRequest();
-        var dto = userService.updateUserProfile("ana@test.com", req);
+        var dto = userService.updateUserProfile("ana@test.com", req, null);
 
         verify(userMapper).updateEntity(user, req);
         verify(userRepository).save(user);
+        verify(fileStorageService, never()).store(any(MultipartFile.class), any(StorageDirectory.class));
         assertEquals("ana@test.com", dto.getEmail());
     }
 
     @Test
-    @DisplayName("createProfile crea usuario cuando email no existe y rol válido")
+    @DisplayName("updateUserProfile guarda foto y elimina anterior")
+    void updateUserProfileWithPicture() {
+        var user = sampleUser();
+        user.setProfilePictureUrl("/uploads/users/old.jpg");
+
+        var file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        var stored = new StoredFile("users/new.jpg", "/uploads/users/new.jpg");
+
+        when(userRepository.findByEmail("ana@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toDto(user)).thenReturn(UserResponse.builder().email("ana@test.com").profilePictureUrl(stored.publicUrl()).build());
+        when(fileStorageService.store(file, StorageDirectory.USER_PROFILE)).thenReturn(stored);
+
+        var req = new UserUpdateRequest();
+        var dto = userService.updateUserProfile("ana@test.com", req, file);
+
+        verify(userMapper).updateEntity(user, req);
+        verify(fileStorageService).store(file, StorageDirectory.USER_PROFILE);
+        verify(fileStorageService).deleteByPublicUrl("/uploads/users/old.jpg");
+        verify(userRepository).save(user);
+        assertEquals(stored.publicUrl(), user.getProfilePictureUrl());
+        assertEquals(stored.publicUrl(), dto.getProfilePictureUrl());
+    }
+
+    @Test
+    @DisplayName("createProfile crea usuario cuando email no existe y rol valido")
     void createProfileOk() {
         Rol userRole = new Rol("USER");
         when(userRepository.existsByEmail("nuevo@test.com")).thenReturn(false);
@@ -110,11 +142,10 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("createProfile falla si rol inválido")
+    @DisplayName("createProfile falla si rol invalido")
     void createProfileInvalidRole() {
         when(userRepository.existsByEmail("nuevo@test.com")).thenReturn(false);
         when(rolRepository.findByNombre("ROL_INVALIDO")).thenReturn(Optional.empty());
         assertThrows(IllegalArgumentException.class, () -> userService.createProfile("nuevo@test.com", "u", "rol_invalido"));
     }
 }
-

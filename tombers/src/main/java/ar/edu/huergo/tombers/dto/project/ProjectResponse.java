@@ -19,7 +19,7 @@ public class ProjectResponse {
     private Long id;
     private String title;
     private String description;
-    private String imageUrl;
+    private String bannerUrl;
     private Integer teamCurrent;
     private Integer teamMax;
     private String duration;
@@ -36,5 +36,6 @@ public class ProjectResponse {
     private LocalDate updatedAt;
 
 }
+
 
 
