@@ -112,7 +112,7 @@ class ProfileManager {
         const expandedStats = this.expandedCard?.querySelectorAll('.stat-value');
         if (expandedStats && expandedStats.length >= 4) {
             expandedStats[0].textContent = this.profile.age?.toString() || 'N/D';
-            expandedStats[1].textContent = this.profile.birthDate || 'N/D';
+            expandedStats[1].textContent = this.profile.availability || 'N/D';
             expandedStats[2].textContent = this.profile.languages || 'N/D';
             expandedStats[3].textContent = this.profile.specialization || 'N/D';
         }
@@ -325,7 +325,7 @@ class ProfileManager {
             { label: 'Nombre', name: 'firstName', type: 'text', value: this.profile.firstName || '', required: true },
             { label: 'Apellido', name: 'lastName', type: 'text', value: this.profile.lastName || '', required: true },
             { label: 'Edad', name: 'age', type: 'number', value: this.profile.age ?? '', min: 0 },
-            { label: 'Fecha de nacimiento', name: 'birthDate', type: 'text', value: this.profile.birthDate || '', placeholder: 'AAAA-MM-DD' },
+            { label: 'Disponibilidad', name: 'availability', type: 'text', value: this.profile.availability || '', maxLength: 50 },
             { label: 'Idiomas', name: 'languages', type: 'text', value: this.profile.languages || '' },
             { label: 'Especialización', name: 'specialization', type: 'text', value: this.profile.specialization || '' },
             { label: 'Teléfono', name: 'phone', type: 'text', value: this.profile.phone || '' },
@@ -440,7 +440,7 @@ class ProfileManager {
             firstName: toString(formData.get('firstName')),
             lastName: toString(formData.get('lastName')),
             age: this.parseNumber(formData.get('age')),
-            birthDate: toString(formData.get('birthDate')),
+            availability: toString(formData.get('availability')),
             languages: toString(formData.get('languages')),
             specialization: toString(formData.get('specialization')),
             phone: toString(formData.get('phone')),
