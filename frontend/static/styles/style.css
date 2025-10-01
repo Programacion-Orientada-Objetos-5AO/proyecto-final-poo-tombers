@@ -246,7 +246,7 @@
             color: #D4BDE8;
             flex-grow: 1;
             overflow-y: auto;
-            max-height: 170px; /* o la altura que consideres adecuada */
+            height: 100px; /* o la altura que consideres adecuada */
             overflow-y: auto;
             /* para que no se vea un scroll horizontal */
             overflow-x: hidden;
