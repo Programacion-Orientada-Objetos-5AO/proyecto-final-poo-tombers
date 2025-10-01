@@ -1,4 +1,4 @@
-﻿// Archivo: static/scripts/userscript.js
+// Archivo: static/scripts/userscript.js
 // Sincroniza la vista de perfil con el backend de Spring Boot.
 
 class ProfileManager {
@@ -8,6 +8,23 @@ class ProfileManager {
         this.expandedCard = document.getElementById('expanded-card');
         this.editButton = document.getElementById('edit-profile-btn');
         this.init();
+    }
+
+    resolveAsset(path) {
+        if (!path) {
+            return null;
+        }
+        const globalResolver = window.resolveAssetUrl;
+        if (typeof globalResolver === 'function') {
+            return globalResolver(path);
+        }
+        if (/^https?:\/\//i.test(path)) {
+            return path;
+        }
+        const base = window.apiClient?.baseUrl ?? '';
+        const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
+        const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+        return `${normalizedBase}${normalizedPath}`;
     }
 
     async init() {
@@ -58,7 +75,7 @@ class ProfileManager {
         const fullName = `${this.profile.firstName || ''} ${this.profile.lastName || ''}`.trim() || 'Usuario sin nombre';
         const status = (this.profile.status || 'AVAILABLE').toString();
 
-        const pictureUrl = this.profile.profilePictureUrl || '/static/imagenes/logoTomberS.png';
+        const pictureUrl = this.resolveAsset(this.profile.profilePictureUrl) || '/static/imagenes/logoTomberS.png';
         const cardImage = this.projectCard?.querySelector('.user-card-image');
         if (cardImage) {
             cardImage.style.backgroundImage = `url('${pictureUrl}')`;
@@ -270,7 +287,7 @@ class ProfileManager {
         imageLabel.style.fontSize = '14px';
 
         const imagePreview = document.createElement('img');
-        imagePreview.src = this.profile?.profilePictureUrl || '/static/imagenes/logoTomberS.png';
+        imagePreview.src = this.resolveAsset(this.profile?.profilePictureUrl) || '/static/imagenes/logoTomberS.png';
         imagePreview.alt = 'Vista previa de la foto de perfil';
         imagePreview.style.width = '96px';
         imagePreview.style.height = '96px';
@@ -289,7 +306,7 @@ class ProfileManager {
         imageInput.addEventListener('change', (event) => {
             const file = event.target.files?.[0];
             if (!file) {
-                imagePreview.src = this.profile?.profilePictureUrl || '/static/imagenes/logoTomberS.png';
+                imagePreview.src = this.resolveAsset(this.profile?.profilePictureUrl) || '/static/imagenes/logoTomberS.png';
                 return;
             }
             const reader = new FileReader();
@@ -520,3 +537,4 @@ class ProfileManager {
 window.addEventListener('DOMContentLoaded', () => {
     window.profileManager = new ProfileManager();
 });
+

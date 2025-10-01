@@ -1,5 +1,21 @@
-﻿// Archivo: scripts/projects.js
+// Archivo: scripts/projects.js
 // Obtiene proyectos desde el backend y actualiza las vistas del panel principal.
+
+// Utility to resolve API-hosted asset URLs.
+const resolveAssetUrl = (path) => {
+    if (!path) {
+        return null;
+    }
+    if (/^https?:\/\//i.test(path)) {
+        return path;
+    }
+    const base = window.apiClient?.baseUrl ?? '';
+    const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${normalizedBase}${normalizedPath}`;
+};
+
+window.resolveAssetUrl = window.resolveAssetUrl || resolveAssetUrl;
 
 class ProjectsManager {
     constructor() {
@@ -71,7 +87,7 @@ class ProjectsManager {
             id: project.id,
             title: project.title || 'Proyecto sin título',
             description: project.description || 'Sin descripción disponible.',
-            bannerUrl: project.bannerUrl || '/static/imagenes/coding-foto-ejemplo.jpg',
+            bannerUrl: resolveAssetUrl(project.bannerUrl) || '/static/imagenes/coding-foto-ejemplo.jpg',
             stats,
             technologies,
             objectives,
@@ -121,7 +137,8 @@ class ProjectsManager {
             description.textContent = project.description;
         }
         if (image) {
-            image.style.backgroundImage = `url('${project.bannerUrl}')`;
+            const bannerSrc = project.bannerUrl || '/static/imagenes/coding-foto-ejemplo.jpg';
+            image.style.backgroundImage = `url('${bannerSrc}')`;
         }
 
         if (statsText?.length >= 4) {
@@ -164,7 +181,7 @@ class ProjectsManager {
 
         const expandedImage = this.expandedCard.querySelector('.expanded-image img');
         if (expandedImage) {
-            expandedImage.src = project.bannerUrl;
+            expandedImage.src = project.bannerUrl || '/static/imagenes/coding-foto-ejemplo.jpg';
         }
 
         const statValues = this.expandedCard.querySelectorAll('.stat-value');
@@ -543,4 +560,5 @@ function handleSwipe(direction) {
 function getViewingStats() {
     return window.projectsManager?.getViewingStats() ?? null;
 }
+
 
