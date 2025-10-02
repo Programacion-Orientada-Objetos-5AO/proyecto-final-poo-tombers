@@ -73,7 +73,7 @@ class ProfileManager {
         }
 
         const fullName = `${this.profile.firstName || ''} ${this.profile.lastName || ''}`.trim() || 'Usuario sin nombre';
-        const status = (this.profile.status || 'AVAILABLE').toString();
+        const status = (this.profile.status || 'DISPONIBLE').toString();
 
         const pictureUrl = this.resolveAsset(this.profile.profilePictureUrl) || '/static/imagenes/profile-placeholder.svg';
         const cardImage = this.projectCard?.querySelector('.user-card-image');
@@ -104,7 +104,7 @@ class ProfileManager {
         const statusBadge = this.expandedCard?.querySelector('.status-badge');
         if (statusBadge) {
             statusBadge.textContent = this.translateStatus(status);
-            statusBadge.className = `status-badge ${status === 'AVAILABLE' ? 'active' : ''}`;
+            statusBadge.className = `status-badge ${status === 'DISPONIBLE' ? 'active' : ''}`;
         }
 
         const cardStats = this.projectCard?.querySelectorAll('.stats-text');
@@ -118,7 +118,7 @@ class ProfileManager {
         const expandedStats = this.expandedCard?.querySelectorAll('.stat-value');
         if (expandedStats && expandedStats.length >= 4) {
             expandedStats[0].textContent = this.profile.age?.toString() || 'N/D';
-            expandedStats[1].textContent = this.profile.availability || 'N/D';
+            expandedStats[1].textContent = this.translateStatus(status);
             expandedStats[2].textContent = this.profile.languages || 'N/D';
             expandedStats[3].textContent = this.profile.specialization || 'N/D';
         }
@@ -331,7 +331,7 @@ class ProfileManager {
             { label: 'Nombre', name: 'firstName', type: 'text', value: this.profile.firstName || '', required: true },
             { label: 'Apellido', name: 'lastName', type: 'text', value: this.profile.lastName || '', required: true },
             { label: 'Edad', name: 'age', type: 'number', value: this.profile.age ?? '', min: 0 },
-            { label: 'Disponibilidad', name: 'availability', type: 'text', value: this.profile.availability || '', maxLength: 50 },
+            { label: 'Disponibilidad', name: 'status', type: 'select', value: this.profile.status || 'DISPONIBLE', options: ['DISPONIBLE', 'OCUPADO', 'INACTIVO'] },
             { label: 'Idiomas', name: 'languages', type: 'text', value: this.profile.languages || '' },
             { label: 'Especialización', name: 'specialization', type: 'text', value: this.profile.specialization || '' },
             { label: 'Teléfono', name: 'phone', type: 'text', value: this.profile.phone || '' },
@@ -348,18 +348,33 @@ class ProfileManager {
             wrapper.style.fontSize = '14px';
             wrapper.style.gap = '4px';
 
-            const input = document.createElement('input');
-            input.type = field.type;
-            input.name = field.name;
-            input.value = field.value;
-            if (field.placeholder) input.placeholder = field.placeholder;
-            if (field.required) input.required = true;
-            if (typeof field.min !== 'undefined') input.min = field.min;
-            input.style.padding = '10px';
-            input.style.borderRadius = '8px';
-            input.style.border = '1px solid #d0d5dd';
-
-            wrapper.appendChild(input);
+            if (field.type === 'select') {
+                const select = document.createElement('select');
+                select.name = field.name;
+                select.value = field.value;
+                select.style.padding = '10px';
+                select.style.borderRadius = '8px';
+                select.style.border = '1px solid #d0d5dd';
+                field.options.forEach((option) => {
+                    const opt = document.createElement('option');
+                    opt.value = option;
+                    opt.textContent = this.translateStatus(option);
+                    select.appendChild(opt);
+                });
+                wrapper.appendChild(select);
+            } else {
+                const input = document.createElement('input');
+                input.type = field.type;
+                input.name = field.name;
+                input.value = field.value;
+                if (field.placeholder) input.placeholder = field.placeholder;
+                if (field.required) input.required = true;
+                if (typeof field.min !== 'undefined') input.min = field.min;
+                input.style.padding = '10px';
+                input.style.borderRadius = '8px';
+                input.style.border = '1px solid #d0d5dd';
+                wrapper.appendChild(input);
+            }
             form.appendChild(wrapper);
         });
 
@@ -446,7 +461,7 @@ class ProfileManager {
             firstName: toString(formData.get('firstName')),
             lastName: toString(formData.get('lastName')),
             age: this.parseNumber(formData.get('age')),
-            availability: toString(formData.get('availability')),
+            status: toString(formData.get('status')),
             languages: toString(formData.get('languages')),
             specialization: toString(formData.get('specialization')),
             phone: toString(formData.get('phone')),
@@ -513,9 +528,9 @@ class ProfileManager {
 
     translateStatus(status) {
         const map = {
-            AVAILABLE: 'Disponible',
-            BUSY: 'Ocupado',
-            AWAY: 'Ausente',
+            DISPONIBLE: 'Disponible',
+            OCUPADO: 'Ocupado',
+            INACTIVO: 'Inactivo',
         };
         return map[status] || 'Sin estado';
     }
