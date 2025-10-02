@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import ar.edu.huergo.tombers.entity.Skill;
-import ar.edu.huergo.tombers.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +22,7 @@ public class UserResponse {
     private String username;
     private List<Skill> skills;
     private Integer age;
-    private String availability;
+    private String status;
     private String languages;
     private String specialization;
     private String phone;
@@ -32,7 +31,6 @@ public class UserResponse {
     private String profilePictureUrl;
     private String portfolio;
     private String bio;
-    private User.UserStatus status;
     private List<String> certifications;
     private List<Long> projectsIds;
     private List<String> interests;
