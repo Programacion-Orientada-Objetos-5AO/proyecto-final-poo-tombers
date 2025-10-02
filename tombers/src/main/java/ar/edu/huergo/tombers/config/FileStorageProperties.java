@@ -1,4 +1,4 @@
-﻿package ar.edu.huergo.tombers.config;
+package ar.edu.huergo.tombers.config;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
