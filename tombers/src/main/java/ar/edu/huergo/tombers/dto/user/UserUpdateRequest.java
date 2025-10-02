@@ -22,7 +22,7 @@ public class UserUpdateRequest {
     private String lastName;
 
     private Integer age;
-    private String birthDate;
+    private String availability;
     private String languages;
     private String specialization;
     private String phone;
