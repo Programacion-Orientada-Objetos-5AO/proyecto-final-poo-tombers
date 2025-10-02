@@ -23,7 +23,7 @@ public class UserResponse {
     private String username;
     private List<Skill> skills;
     private Integer age;
-    private String birthDate;
+    private String availability;
     private String languages;
     private String specialization;
     private String phone;
