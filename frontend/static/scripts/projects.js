@@ -70,18 +70,55 @@ class ProjectsManager {
             return null;
         }
 
+        const rawProgress = project.progress ?? project.stats?.progress ?? project.progressPercentage;
+        let fallbackProgress = rawProgress;
+        if (fallbackProgress == null && typeof project.teamCurrent === 'number' && typeof project.teamMax === 'number' && project.teamMax > 0) {
+            fallbackProgress = (project.teamCurrent / project.teamMax) * 100;
+        }
+        const progress = this.clampProgress(fallbackProgress);
         const stats = {
             teamCurrent: project.teamCurrent ?? 0,
             teamMax: project.teamMax ?? 0,
             duration: project.duration || 'Por definir',
             language: project.language || 'Sin idioma',
             type: project.type || 'General',
-            progress: project.progress ?? 0,
+            progress,
         };
 
-        const technologies = Array.isArray(project.technologies) ? project.technologies : [];
-        const objectives = Array.isArray(project.objectives) ? project.objectives : [];
-        const skillsNeeded = Array.isArray(project.skillsNeeded) ? project.skillsNeeded : [];
+        const technologies = (Array.isArray(project.technologies) ? project.technologies : [])
+            .map((tech) => {
+                if (typeof tech === 'string') {
+                    const nombre = tech.trim();
+                    return nombre ? { nombre, nivel: '' } : null;
+                }
+                const nombre = typeof tech?.nombre === 'string' ? tech.nombre.trim() : null;
+                const nivel = typeof tech?.nivel === 'string' ? tech.nivel.trim() : '';
+                return nombre ? { nombre, nivel } : null;
+            })
+            .filter(Boolean);
+
+        const objectives = (Array.isArray(project.objectives) ? project.objectives : [])
+            .map((objective) => {
+                if (typeof objective === 'string') {
+                    return objective.trim();
+                }
+                return typeof objective?.text === 'string' ? objective.text.trim() : null;
+            })
+            .filter(Boolean);
+
+        const skillsNeeded = (Array.isArray(project.skillsNeeded) ? project.skillsNeeded : [])
+            .filter((skill) => Boolean(skill))
+            .map((skill) => ({
+                nombre: typeof skill?.nombre === 'string' ? skill.nombre.trim() : null,
+                nivel: typeof skill?.nivel === 'string' ? skill.nivel.trim() : 'Intermedio',
+            }))
+            .filter((skill) => Boolean(skill.nombre));
+
+        const statusValue = typeof project.status === 'string'
+            ? project.status.toUpperCase()
+            : typeof project.status?.name === 'string'
+                ? project.status.name.toUpperCase()
+                : 'ACTIVE';
 
         return {
             id: project.id,
@@ -92,9 +129,10 @@ class ProjectsManager {
             technologies,
             objectives,
             skillsNeeded,
-            status: project.status || 'ACTIVE',
+            status: statusValue,
             repositoryUrl: project.repositoryUrl || null,
             contactEmail: project.contactEmail || null,
+            progress,
         };
     }
 
@@ -175,8 +213,16 @@ class ProjectsManager {
 
         const statusBadge = this.expandedCard.querySelector('.status-badge');
         if (statusBadge) {
-            statusBadge.textContent = this.translateStatus(project.status);
-            statusBadge.className = `status-badge ${project.status === 'ACTIVE' ? 'active' : ''}`;
+            const statusKey = (project.status || 'ACTIVE').toUpperCase();
+            statusBadge.textContent = this.translateStatus(statusKey);
+            const statusClassMap = {
+                ACTIVE: 'active',
+                INACTIVE: 'inactive',
+                COMPLETED: 'completed',
+                ON_HOLD: 'on-hold',
+            };
+            const statusClass = statusClassMap[statusKey] || '';
+            statusBadge.className = `status-badge ${statusClass}`.trim();
         }
 
         const expandedImage = this.expandedCard.querySelector('.expanded-image img');
@@ -184,12 +230,35 @@ class ProjectsManager {
             expandedImage.src = project.bannerUrl || '/static/imagenes/coding-foto-ejemplo.jpg';
         }
 
+        const stats = project.stats || {
+            teamCurrent: project.teamCurrent ?? 0,
+            teamMax: project.teamMax ?? 0,
+            duration: project.duration || 'Por definir',
+            language: project.language || 'Sin idioma',
+            type: project.type || 'General',
+            progress: project.progress ?? 0,
+        };
+
         const statValues = this.expandedCard.querySelectorAll('.stat-value');
         if (statValues.length >= 4) {
-            statValues[0].textContent = `${project.stats.teamCurrent}/${project.stats.teamMax}`;
-            statValues[1].textContent = project.stats.duration;
-            statValues[2].textContent = project.stats.language;
-            statValues[3].textContent = project.stats.type;
+            const teamValue = `${stats.teamCurrent ?? 0}/${stats.teamMax ?? '??'}`;
+            statValues[0].textContent = teamValue;
+            statValues[1].textContent = stats.duration || 'Por definir';
+            statValues[2].textContent = stats.language || 'Sin idioma';
+            statValues[3].textContent = stats.type || 'General';
+        }
+
+        const progressValue = this.clampProgress(project.progress ?? stats.progress);
+        project.progress = progressValue;
+        stats.progress = progressValue;
+
+        const progressFill = this.expandedCard.querySelector('.progress-fill');
+        if (progressFill) {
+            progressFill.style.width = `${progressValue}%`;
+        }
+        const progressText = this.expandedCard.querySelector('.progress-text');
+        if (progressText) {
+            progressText.textContent = `${progressValue}% completado`;
         }
 
         const descriptionSection = this.expandedCard.querySelector('.section-content');
@@ -304,10 +373,21 @@ class ProjectsManager {
             .toUpperCase();
     }
 
+    /**
+     * Normaliza el porcentaje de avance recibido.
+     */
+    clampProgress(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return 0;
+        }
+        return Math.min(100, Math.max(0, Math.round(numeric)));
+    }
+
     translateStatus(status) {
         const map = {
             ACTIVE: 'Activo',
-            INACTIVE: 'Inactivo',
+            INACTIVE: 'En pausa',
             COMPLETED: 'Completado',
             ON_HOLD: 'En planificación',
         };
@@ -326,11 +406,18 @@ class ProjectsManager {
         this.joinButton = document.querySelector('.action-btn.primary');
 
         this.rotateIcon?.addEventListener('click', () => this.nextProject());
-        this.joinButton?.addEventListener('click', () => {
+        this.joinButton?.addEventListener('click', async () => {
             const project = this.getCurrentProject();
-            if (project) {
-                this.registerLike(project.id);
-                alert(`Te uniste al proyecto "${project.title}"`);
+            if (!project) {
+                return;
+            }
+            // Reutilizamos la misma lógica que el swipe hacia la derecha.
+            await this.handleCardSwipe('right');
+            const message = `Te uniste al proyecto "${project.title}"`;
+            if (typeof window.showToastMessage === 'function') {
+                window.showToastMessage(message, 'exito');
+            } else {
+                alert(message);
             }
         });
 
@@ -418,6 +505,7 @@ class ProjectsManager {
             await this.registerDislike(project.id);
             this.nextProject();
         } else if (direction === 'up') {
+            this.updateExpandedCard(project);
             this.expandedCard?.classList.remove('hidden');
             this.expandedCard?.classList.add('visible');
         }

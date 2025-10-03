@@ -134,9 +134,9 @@
                     <div class="expanded-progress">
                         <div class="progress-label">Avance del proyecto</div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: 65%"></div>
+                            <div class="progress-fill" style="width: 0%"></div>
                         </div>
-                        <span class="progress-text">65% completado</span>
+                        <span class="progress-text">0% completado</span>
                     </div>
                 </div>
 
@@ -222,6 +222,17 @@
                             <option value="Mobile">Mobile</option>
                             <option value="Data Science">Data Science</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="progress">Avance actual (%)</label>
+                        <input type="number" id="progress" min="0" max="100" value="0" placeholder="Ej: 45">
+                    </div>
+                    <div class="form-group">
+                        <label for="objectives">Objetivos principales (uno por línea)</label>
+                        <textarea id="objectives" rows="3" placeholder="Definir alcance&#10;Publicar MVP&#10;Iterar con feedback"></textarea>
                     </div>
                 </div>
 

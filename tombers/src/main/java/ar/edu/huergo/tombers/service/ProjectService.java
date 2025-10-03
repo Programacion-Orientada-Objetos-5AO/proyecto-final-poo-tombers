@@ -3,10 +3,12 @@ package ar.edu.huergo.tombers.service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import ar.edu.huergo.tombers.dto.project.InterestedUsersResponse;
@@ -15,6 +17,7 @@ import ar.edu.huergo.tombers.dto.project.ProjectCreateRequest;
 import ar.edu.huergo.tombers.dto.project.ProjectResponse;
 import ar.edu.huergo.tombers.dto.user.UserResponse;
 import ar.edu.huergo.tombers.entity.Project;
+import ar.edu.huergo.tombers.entity.Skill;
 import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.mapper.ProjectMapper;
 import ar.edu.huergo.tombers.mapper.UserMapper;
@@ -75,6 +78,15 @@ public class ProjectService {
         }
 
         Project project = projectMapper.toEntity(request);
+        project.setStatus(resolveStatus(request.getStatus()));
+        project.setProgress(resolveProgress(request.getProgress()));
+        project.setObjectives(sanitizeStringList(project.getObjectives()));
+        project.setTechnologies(sanitizeStringList(project.getTechnologies()));
+        project.setSkillsNeeded(sanitizeSkills(project.getSkillsNeeded()));
+        if (project.getTeamCurrent() == null) {
+            project.setTeamCurrent(0);
+        }
+
         StoredFile storedBanner = fileStorageService.store(bannerFile, StorageDirectory.PROJECT_BANNER);
         project.setBannerUrl(storedBanner.publicUrl());
         project.setCreatedAt(LocalDate.now());
@@ -110,6 +122,22 @@ public class ProjectService {
         String previousBannerUrl = project.getBannerUrl();
 
         projectMapper.updateEntity(project, request);
+
+        if (request.getStatus() != null) {
+            project.setStatus(resolveStatus(request.getStatus()));
+        } else if (project.getStatus() == null) {
+            project.setStatus(Project.ProjectStatus.ACTIVE);
+        }
+
+        if (request.getProgress() != null) {
+            project.setProgress(resolveProgress(request.getProgress()));
+        } else if (project.getProgress() == null) {
+            project.setProgress(0);
+        }
+
+        project.setObjectives(sanitizeStringList(project.getObjectives()));
+        project.setTechnologies(sanitizeStringList(project.getTechnologies()));
+        project.setSkillsNeeded(sanitizeSkills(project.getSkillsNeeded()));
         project.setUpdatedAt(LocalDate.now());
 
         if (bannerFile != null && !bannerFile.isEmpty()) {
@@ -430,6 +458,60 @@ public class ProjectService {
     /**
      * MÃ©todo auxiliar para obtener el email del usuario autenticado con validaciones adicionales
      */
+    /**
+     * Convierte el estado recibido en el request a la enumeración de la entidad.
+     */
+    private Project.ProjectStatus resolveStatus(ProjectCreateRequest.ProjectStatus status) {
+        if (status == null) {
+            return Project.ProjectStatus.ACTIVE;
+        }
+        return Project.ProjectStatus.valueOf(status.name());
+    }
+
+    /**
+     * Normaliza el avance asegurando que quede en el rango 0 - 100.
+     */
+    private int resolveProgress(Integer progress) {
+        if (progress == null) {
+            return 0;
+        }
+        int sanitized = Math.min(100, Math.max(0, progress));
+        return sanitized;
+    }
+
+    /**
+     * Elimina elementos vacíos y espacios extra de las listas de texto.
+     */
+    private List<String> sanitizeStringList(List<String> values) {
+        if (values == null) {
+            return new ArrayList<>();
+        }
+        return values.stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .distinct()
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    /**
+     * Asegura que las habilidades cuenten con nombre y nivel válidos.
+     */
+    private List<Skill> sanitizeSkills(List<Skill> skills) {
+        if (skills == null) {
+            return new ArrayList<>();
+        }
+        return skills.stream()
+                .filter(skill -> skill != null && StringUtils.hasText(skill.getNombre()))
+                .map(skill -> Skill.builder()
+                        .nombre(skill.getNombre().trim())
+                        .nivel(StringUtils.hasText(skill.getNivel()) ? skill.getNivel().trim() : "Intermedio")
+                        .build())
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    /**
+     * Método auxiliar para obtener el email del usuario autenticado con validaciones adicionales.
+     */
     private String getAuthenticatedUserEmail() {
         try {
             var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -447,14 +529,13 @@ public class ProjectService {
     }
 
     /**
-     * MÃ©todo auxiliar para verificar si un usuario es dueÃ±o de un proyecto
+     * Método auxiliar para verificar si un usuario es dueño de un proyecto.
      */
     private boolean isUserOwnerOfProject(User user, Long projectId) {
         if (user == null || projectId == null) {
             return false;
         }
 
-        // Verificar si el usuario tiene el proyecto en su lista de creados
         if (user.getCreatedProjectIds() != null) {
             return user.getCreatedProjectIds().contains(projectId);
         }
@@ -463,30 +544,19 @@ public class ProjectService {
     }
 
     /**
-     * MÃ©todo auxiliar para verificar si un usuario es dueÃ±o de un proyecto o admin
+     * Método auxiliar para verificar si un usuario es dueño de un proyecto o admin.
      */
     private boolean isUserOwnerOrAdmin(User user, Long projectId) {
         if (user == null || projectId == null) {
             return false;
         }
 
-        // Verificar si el usuario es admin
         boolean isAdmin = user.getRoles().stream()
                 .anyMatch(role -> "ADMIN".equalsIgnoreCase(role.getNombre()));
 
-        // Verificar si el usuario es dueÃ±o del proyecto
         boolean isOwner = user.getCreatedProjectIds() != null && user.getCreatedProjectIds().contains(projectId);
 
         return isAdmin || isOwner;
     }
 
 }
-
-
-
-
-
-
-
-
-
