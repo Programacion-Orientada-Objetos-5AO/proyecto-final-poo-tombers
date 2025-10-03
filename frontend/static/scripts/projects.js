@@ -244,6 +244,9 @@ class ProjectsManager {
         }
 
         const progressValue = this.clampProgress(project.progress ?? stats.progress);
+        project.progress = progressValue;
+        stats.progress = progressValue;
+
         const progressFill = this.expandedCard.querySelector('.progress-fill');
         if (progressFill) {
             progressFill.style.width = `${progressValue}%`;
@@ -379,7 +382,7 @@ class ProjectsManager {
     translateStatus(status) {
         const map = {
             ACTIVE: 'Activo',
-            INACTIVE: 'Inactivo',
+            INACTIVE: 'En pausa',
             COMPLETED: 'Completado',
             ON_HOLD: 'En planificación',
         };
