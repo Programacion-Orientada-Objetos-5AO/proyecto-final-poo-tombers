@@ -109,6 +109,12 @@ class ProjectsManager {
             }))
             .filter((skill) => Boolean(skill.nombre));
 
+        const statusValue = typeof project.status === 'string'
+            ? project.status.toUpperCase()
+            : typeof project.status?.name === 'string'
+                ? project.status.name.toUpperCase()
+                : 'ACTIVE';
+
         return {
             id: project.id,
             title: project.title || 'Proyecto sin título',
@@ -118,9 +124,10 @@ class ProjectsManager {
             technologies,
             objectives,
             skillsNeeded,
-            status: project.status || 'ACTIVE',
+            status: statusValue,
             repositoryUrl: project.repositoryUrl || null,
             contactEmail: project.contactEmail || null,
+            progress,
         };
     }
 
@@ -201,8 +208,16 @@ class ProjectsManager {
 
         const statusBadge = this.expandedCard.querySelector('.status-badge');
         if (statusBadge) {
-            statusBadge.textContent = this.translateStatus(project.status);
-            statusBadge.className = `status-badge ${project.status === 'ACTIVE' ? 'active' : ''}`;
+            const statusKey = (project.status || 'ACTIVE').toUpperCase();
+            statusBadge.textContent = this.translateStatus(statusKey);
+            const statusClassMap = {
+                ACTIVE: 'active',
+                INACTIVE: 'inactive',
+                COMPLETED: 'completed',
+                ON_HOLD: 'on-hold',
+            };
+            const statusClass = statusClassMap[statusKey] || '';
+            statusBadge.className = `status-badge ${statusClass}`.trim();
         }
 
         const expandedImage = this.expandedCard.querySelector('.expanded-image img');
@@ -482,6 +497,7 @@ class ProjectsManager {
             await this.registerDislike(project.id);
             this.nextProject();
         } else if (direction === 'up') {
+            this.updateExpandedCard(project);
             this.expandedCard?.classList.remove('hidden');
             this.expandedCard?.classList.add('visible');
         }
