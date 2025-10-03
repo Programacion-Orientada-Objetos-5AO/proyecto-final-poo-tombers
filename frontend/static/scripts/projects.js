@@ -70,7 +70,12 @@ class ProjectsManager {
             return null;
         }
 
-        const progress = this.clampProgress(project?.progress);
+        const rawProgress = project.progress ?? project.stats?.progress ?? project.progressPercentage;
+        let fallbackProgress = rawProgress;
+        if (fallbackProgress == null && typeof project.teamCurrent === 'number' && typeof project.teamMax === 'number' && project.teamMax > 0) {
+            fallbackProgress = (project.teamCurrent / project.teamMax) * 100;
+        }
+        const progress = this.clampProgress(fallbackProgress);
         const stats = {
             teamCurrent: project.teamCurrent ?? 0,
             teamMax: project.teamMax ?? 0,
