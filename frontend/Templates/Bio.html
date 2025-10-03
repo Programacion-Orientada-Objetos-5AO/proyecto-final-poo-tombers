@@ -45,12 +45,13 @@
         <div class="project-card" id="project-card">
             <div class="card-title-row">
                 <img src="/static/imagenes/logoTomberS.png" alt="Logo Tomber Sur" class="logo-img-mini">
+                <div class="status-circle"></div>
                 <h2 class="card-title">Nombre y apellido</h2>
             </div>
             <div class="user-card-image" title="Click para cambiar imagen"></div>
             <div class="card-stats">
                 <span><span class="fluent--people-team-16-filled iconos"></span><span class="stats-text">Edad</span></span>
-                <span><span class="tabler--clock iconos"></span><span class="stats-text">Disponibilidad</span></span>
+                <span class="star-rating">★★★★★</span>
                 <span><span class="material-symbols--translate iconos"></span><span class="stats-text">Idiomas</span></span>
                 <span><span class="mdi--tools iconos"></span><span class="stats-text">Especialidad</span></span>
             </div>
@@ -70,7 +71,10 @@
         <button class="close-expanded" id="close-expanded">&times;</button>
         <div class="expanded-content">
             <div class="expanded-header">
-                <h2 class="expanded-title">Nombre y apellido</h2>
+                <div class="title-with-circle">
+                    <h2 class="expanded-title">Nombre y apellido</h2>
+                    <div class="status-circle"></div>
+                </div>
                 <div class="expanded-status">
                     <span class="status-badge active">Disponible</span>
                     <button class="edit-profile-btn" id="edit-profile-btn">Editar</button>
@@ -93,12 +97,8 @@
                                 <span class="stat-value">--</span>
                             </div>
                         </div>
-                        <div class="stat-item">
-                            <span class="tabler--clock"></span>
-                            <div class="stat-content">
-                                <span class="stat-label">Disponibilidad</span>
-                                <span class="stat-value">--</span>
-                            </div>
+                        <div class="stat-item star-rating-expanded">
+                            <span class="star-rating">★★★★★</span>
                         </div>
                         <div class="stat-item">
                             <span class="material-symbols--translate"></span>

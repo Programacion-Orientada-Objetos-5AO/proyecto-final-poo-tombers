@@ -239,6 +239,56 @@
             color: #D4BDE8;
         }
 
+        .status-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #4CAF50; /* default green for active */
+            margin-left: 5px;
+            border: 1px solid #fff;
+        }
+
+        .status-circle.inactive {
+            background-color: #c1cc29; /* yellow */
+        }
+
+        .status-circle.ocupado {
+            background-color: #f10b0b; /* red */
+        }
+
+        .star-rating {
+            font-size: 14px;
+            color: gold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+        }
+
+.star-rating-expanded {
+    display: flex;
+    justify-content: flex-start; /* Align to left */
+    align-items: center;
+    padding: 30px 40px; /* More padding for bigger circle */
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%; /* Make circle */
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.3s ease;
+    width: 240px; /* Bigger circle */
+    height: 70px; /* Bigger circle */
+    margin-left: 5px; /* Space to the right of name */
+}
+
+.star-rating-expanded:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+}
+
+.star-rating-expanded .star-rating {
+    font-size: 24px; /* Larger stars */
+    margin-left: 5px; /* Slight left margin for stars */
+}
+
         .card-description {
             font-size: 14px;
             line-height: 1.4;
@@ -757,6 +807,17 @@ body.dark-mode .like-indicator , body.dark-mode .dislike-indicator {
     background: linear-gradient(135deg, #4CAF50, #45a049);
     color: white;
 }
+
+.status-badge.inactive {
+    background: linear-gradient(135deg, #c1cc29, #cfc24c);
+    color: white;
+}
+
+.status-badge.ocupado {
+    background: linear-gradient(135deg, #f10b0b, #da0d0d);
+    color: white;
+}
+
 
 .priority-badge.high {
     background: linear-gradient(135deg, #ff6b6b, #ee5a52);
