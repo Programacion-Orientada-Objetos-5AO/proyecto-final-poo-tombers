@@ -201,6 +201,8 @@ class AuthManager {
         if (!password) {
             this.setFieldError('loginPasswordError', 'Ingresa tu contrasena para continuar.');
             passwordValid = false;
+        } else {
+            this.setFieldError('loginPasswordError', '');
         }
 
         this.collectingSummary = false;
@@ -404,6 +406,7 @@ class AuthManager {
             return false;
         }
 
+        this.setFieldError(errorId, '');
         return true;
     }
 
@@ -474,6 +477,7 @@ class AuthManager {
             return false;
         }
 
+        this.setFieldError(errorId, '');
         return true;
     }
 
@@ -496,6 +500,7 @@ class AuthManager {
             return false;
         }
 
+        this.setFieldError('usernameError', '');
         return true;
     }
 
@@ -521,6 +526,7 @@ class AuthManager {
         }
 
         this.updatePasswordStrength(value);
+        this.setFieldError('registerPasswordError', '');
         return true;
     }
 
@@ -542,6 +548,7 @@ class AuthManager {
             return false;
         }
 
+        this.setFieldError('confirmPasswordError', '');
         return true;
     }
 
