@@ -10,6 +10,9 @@ class AuthManager {
         this.notification = document.getElementById('notification');
         this.loadingOverlay = document.getElementById('loadingOverlay');
         this.notificationTimeout = null;
+        this.validationSummary = [];// Guarda mensajes de error del ciclo actual.
+        this.collectingSummary = false;// Marca cuando debemos agrupar mensajes.
+        this.lastValidationSummary = ''; // Resumen armado en la ultima validacion.
         this.init();
     }
 
@@ -154,16 +157,22 @@ class AuthManager {
             return;
         }
 
+        const firstNameInput = document.getElementById('firstName');
+        const lastNameInput = document.getElementById('lastName');
         const passwordInput = document.getElementById('registerPassword');
         const confirmPasswordInput = document.getElementById('confirmPassword');
         const emailInput = document.getElementById('registerEmail');
         const usernameInput = document.getElementById('username');
 
+        // Validaciones inmediatas para mostrar errores especificos en cada campo.
+        firstNameInput?.addEventListener('blur', () => this.validateNameField('firstName', 'firstNameError', 'El nombre'));
+        lastNameInput?.addEventListener('blur', () => this.validateNameField('lastName', 'lastNameError', 'El apellido'));
         passwordInput?.addEventListener('input', () => this.updatePasswordStrength(passwordInput.value));
         confirmPasswordInput?.addEventListener('input', () => this.validatePasswordMatch());
-        emailInput?.addEventListener('blur', () => this.validateEmail());
+        emailInput?.addEventListener('blur', () => this.validateEmail('registerEmail', 'registerEmailError'));
         usernameInput?.addEventListener('blur', () => this.validateUsername());
     }
+
 
     /**
      * Envía las credenciales al backend y gestiona la navegación posterior.
@@ -171,30 +180,62 @@ class AuthManager {
     async handleLogin(event) {
         event.preventDefault();
 
-        const email = document.getElementById('loginEmail')?.value.trim();
-        const password = document.getElementById('loginPassword')?.value;
+        this.clearErrors();
+        // Limpiamos mensajes anteriores para que los errores actuales se vean claros.
 
-        if (!email || !password) {
-            this.showNotification('Completá todos los campos para ingresar.', 'error');
+        const emailInput = document.getElementById('loginEmail');
+        const passwordInput = document.getElementById('loginPassword');
+        const email = emailInput?.value.trim() || '';
+        const password = passwordInput?.value || '';
+
+        // Comenzamos a agrupar mensajes claros para el usuario.
+        this.collectingSummary = true;
+
+        // Validamos el correo con textos pensados para el login.
+        const emailValid = this.validateEmail('loginEmail', 'loginEmailError', {
+            required: 'Ingresa tu correo electronico en formato usuario@dominio.com.',
+            invalid: 'El correo debe tener el formato usuario@dominio.com (sin espacios).',
+        });
+
+        let passwordValid = true;
+        if (!password) {
+            this.setFieldError('loginPasswordError', 'Ingresa tu contrasena para continuar.');
+            passwordValid = false;
+        }
+
+        this.collectingSummary = false;
+
+        if (!emailValid || !passwordValid) {
+            const summary = this.buildSummaryMessage('Corrige los errores antes de continuar.');
+            this.showNotification(summary, 'error');
+            this.validationSummary = [];
             return;
         }
 
         try {
             this.toggleLoading(true);
             await window.apiClient.auth.login({ email, password });
-            this.showNotification('Inicio de sesión exitoso, redirigiendo...', 'success');
+            this.showNotification('Inicio de sesion exitoso, redirigiendo...', 'success');
             setTimeout(() => {
                 window.location.href = '/feed';
             }, 1200);
         } catch (error) {
-            const message = error?.data?.detail || error?.message || 'No fue posible iniciar sesión.';
+            let message = error?.data?.detail || error?.message || 'No fue posible iniciar sesion.';
+            if (error?.status === 401) {
+                message = 'Email o contrasena incorrectos.';
+            }
+            if (error?.status === 400 && /(validaci(o|\u00f3)n)/i.test(message)) {
+                message = 'Revisa el formato de los datos ingresados.';
+            }
             this.showNotification(message, 'error');
-            this.setFieldError('loginEmailError', message);
-            this.setFieldError('loginPasswordError', message);
+            this.applyLoginErrors(error, message);
         } finally {
+            this.validationSummary = [];
+            this.collectingSummary = false;
             this.toggleLoading(false);
         }
     }
+
 
     /**
      * Valida los datos del formulario de registro y crea la cuenta en el backend.
@@ -203,7 +244,9 @@ class AuthManager {
         event.preventDefault();
 
         if (!this.validateRegisterForm()) {
-            this.showNotification('Completá todos los campos requeridos, corregí los errores y aceptá los términos.', 'error');
+            const summary = this.lastValidationSummary || this.buildSummaryMessage('Revisa los errores marcados antes de continuar.');
+            this.showNotification(summary, 'error');
+            this.validationSummary = [];
             return;
         }
 
@@ -258,10 +301,13 @@ class AuthManager {
             username: 'usernameError',
             password: 'registerPasswordError',
             confirmPassword: 'confirmPasswordError',
+            acceptTerms: 'acceptTermsError',
+            termsAccepted: 'acceptTermsError',
         };
 
         const backendErrors = error?.data?.errores || error?.data?.errors;
         if (backendErrors && typeof backendErrors === 'object') {
+            // Si el backend envio detalles por campo, los mostramos tal cual.
             Object.entries(backendErrors).forEach(([field, detail]) => {
                 const targetId = fieldMap[field] || `${field}Error`;
                 const message = Array.isArray(detail) ? detail.join(' ') : detail;
@@ -281,6 +327,50 @@ class AuthManager {
         }
     }
 
+
+    /**
+     * Gestiona los errores devueltos por el backend en el inicio de sesion.
+     */
+    applyLoginErrors(error, fallbackMessage) {
+        const backendErrors = error?.data?.errors || error?.data?.errores;
+
+        if (backendErrors && typeof backendErrors === 'object') {
+            // Si el backend envio detalles por campo, los mostramos tal cual.
+            const emailError = backendErrors.email || backendErrors.username;
+            const passwordError = backendErrors.password;
+
+            if (emailError) {
+                const message = Array.isArray(emailError) ? emailError.join(' ') : emailError;
+                this.setFieldError('loginEmailError', message);
+            }
+
+            if (passwordError) {
+                const message = Array.isArray(passwordError) ? passwordError.join(' ') : passwordError;
+                this.setFieldError('loginPasswordError', message);
+            }
+
+            return;
+        }
+
+        const comparableMessage = fallbackMessage || error?.message || '';
+        // Detectamos errores comunes de formato o credenciales para dar contexto util.
+        if (error?.status === 400 && /(validaci(o|\u00f3)n)/i.test(comparableMessage)) {
+            this.setFieldError('loginEmailError', 'El correo no tiene un formato valido (ejemplo: usuario@dominio.com).');
+            return;
+        }
+
+        if (error?.status === 401) {
+            this.setFieldError('loginEmailError', 'Verifica que el correo sea correcto.');
+            this.setFieldError('loginPasswordError', 'La contrasena ingresada no es correcta.');
+            return;
+        }
+
+        if (fallbackMessage) {
+            this.setFieldError('loginPasswordError', fallbackMessage);
+        }
+    }
+
+
     /**
      * Convierte el campo de habilidades en una estructura compatible con el backend.
      */
@@ -297,61 +387,96 @@ class AuthManager {
     }
 
     /**
-     * Valida los datos obligatorios del formulario de registro.
+     * Valida nombres y apellidos para mostrar mensajes claros al usuario.
      */
-    validateRegisterForm() {
-        this.clearErrors();
+    validateNameField(fieldId, errorId, label) {
+        const input = document.getElementById(fieldId);
+        const value = input?.value.trim() || '';
+        const regex = /^[A-Za-zÀ-ÖØ-öø-ÿ'\s-]{2,40}$/;
 
-        const requiredFields = ['firstName', 'lastName', 'registerEmail', 'username', 'registerPassword', 'confirmPassword'];
-        let valid = true;
-
-        requiredFields.forEach((fieldId) => {
-            const input = document.getElementById(fieldId);
-            if (!input || !input.value.trim()) {
-                this.setFieldError(`${fieldId}Error`, 'Este campo es obligatorio.');
-                valid = false;
-            }
-        });
-
-        const termsCheckbox = document.getElementById('acceptTerms');
-        if (!termsCheckbox || !termsCheckbox.checked) {
-            valid = false;
+        if (!value) {
+            this.setFieldError(errorId, `${label} es obligatorio.`);
+            return false;
         }
 
-        if (!this.validateEmail()) {
-            valid = false;
-        }
-
-        if (!this.validateUsername()) {
-            valid = false;
-        }
-
-        if (!this.validatePasswordStrength()) {
-            valid = false;
-        }
-
-        if (!this.validatePasswordMatch()) {
-            valid = false;
-        }
-
-        return valid;
-    }
-
-    /**
-     * Verifica la estructura general del email.
-     */
-    validateEmail() {
-        const emailInput = document.getElementById('registerEmail');
-        const value = emailInput?.value.trim();
-        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (!value || !regex.test(value)) {
-            this.setFieldError('registerEmailError', 'Ingresá un email válido.');
+        if (!regex.test(value)) {
+            this.setFieldError(errorId, `${label} solo puede incluir letras, espacios o guiones (2 a 40 caracteres).`);
             return false;
         }
 
         return true;
     }
+
+
+    /**
+     * Valida los datos obligatorios del formulario de registro.
+     */
+    validateRegisterForm() {
+        this.clearErrors();
+
+        let valid = true;
+        // Validamos cada bloque para devolverle al usuario un mensaje puntual.
+
+        this.collectingSummary = true;
+
+        const nameValid = this.validateNameField('firstName', 'firstNameError', 'El nombre');
+        valid = nameValid && valid;
+
+        const lastNameValid = this.validateNameField('lastName', 'lastNameError', 'El apellido');
+        valid = lastNameValid && valid;
+
+        const emailValid = this.validateEmail('registerEmail', 'registerEmailError');
+        valid = emailValid && valid;
+
+        const usernameValid = this.validateUsername();
+        valid = usernameValid && valid;
+
+        const passwordValid = this.validatePasswordStrength();
+        valid = passwordValid && valid;
+
+        const confirmValid = this.validatePasswordMatch();
+        valid = confirmValid && valid;
+
+        const termsCheckbox = document.getElementById('acceptTerms');
+        if (!termsCheckbox || !termsCheckbox.checked) {
+            this.setFieldError('acceptTermsError', 'Debes aceptar los terminos y condiciones para crear tu cuenta.');
+            valid = false;
+        }
+
+        this.collectingSummary = false;
+
+        if (!valid) {
+            this.lastValidationSummary = this.buildSummaryMessage('Revisa los campos marcados antes de continuar.');
+        } else {
+            this.lastValidationSummary = '';
+            this.validationSummary = [];
+        }
+
+        return valid;
+    }
+
+
+    /**
+     * Verifica la estructura general del email.
+     */
+    validateEmail(fieldId = 'registerEmail', errorId = 'registerEmailError', messages = {}) {
+        const emailInput = document.getElementById(fieldId);
+        const value = emailInput?.value.trim() || '';
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!value) {
+            this.setFieldError(errorId, messages.required || 'Ingresa un correo electronico.');
+            return false;
+        }
+
+        if (!regex.test(value)) {
+            this.setFieldError(errorId, messages.invalid || 'Ingresa un correo electronico valido (ejemplo: usuario@dominio.com).');
+            return false;
+        }
+
+        return true;
+    }
+
 
     /**
      * Valida que el nombre de usuario solo contenga caracteres permitidos.
@@ -361,13 +486,19 @@ class AuthManager {
         const value = usernameInput?.value.trim();
         const regex = /^[a-zA-Z0-9_]{3,30}$/;
 
-        if (!value || !regex.test(value)) {
-            this.setFieldError('usernameError', 'El usuario debe tener 3 a 30 caracteres alfanuméricos o guión bajo.');
+        if (!value) {
+            this.setFieldError('usernameError', 'Elige un nombre de usuario.');
+            return false;
+        }
+
+        if (!regex.test(value)) {
+            this.setFieldError('usernameError', 'El usuario debe tener 3 a 30 caracteres sin espacios ni simbolos (solo letras, numeros o guion bajo).');
             return false;
         }
 
         return true;
     }
+
 
     /**
      * Comprueba los requisitos mínimos de seguridad exigidos por el backend.
@@ -377,8 +508,14 @@ class AuthManager {
         const value = passwordInput?.value || '';
         const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{16,}$/;
 
-        if (!value || !regex.test(value)) {
-            this.setFieldError('registerPasswordError', 'Usá al menos 16 caracteres con mayúsculas, minúsculas, número y símbolo.');
+        if (!value) {
+            this.setFieldError('registerPasswordError', 'Ingresa una contrasena.');
+            this.updatePasswordStrength('');
+            return false;
+        }
+
+        if (!regex.test(value)) {
+            this.setFieldError('registerPasswordError', 'La contrasena debe tener 16 caracteres como minimo e incluir mayusculas, minusculas, numeros y un simbolo (@$!%*?&).');
             this.updatePasswordStrength(value);
             return false;
         }
@@ -387,6 +524,7 @@ class AuthManager {
         return true;
     }
 
+
     /**
      * Informa cuando las contraseñas difieren.
      */
@@ -394,13 +532,19 @@ class AuthManager {
         const password = document.getElementById('registerPassword')?.value;
         const confirm = document.getElementById('confirmPassword')?.value;
 
+        if (!confirm) {
+            this.setFieldError('confirmPasswordError', 'Confirma tu contrasena para continuar.');
+            return false;
+        }
+
         if (password !== confirm) {
-            this.setFieldError('confirmPasswordError', 'Las contraseñas no coinciden.');
+            this.setFieldError('confirmPasswordError', 'Las contrasenas deben ser iguales.');
             return false;
         }
 
         return true;
     }
+
 
     /**
      * Muestra un texto indicativo de la fuerza de la contraseña.
@@ -412,6 +556,7 @@ class AuthManager {
 
         if (!value) {
             this.passwordStrength.textContent = '';
+            this.passwordStrength.className = 'password-strength';
             return;
         }
 
@@ -420,16 +565,25 @@ class AuthManager {
         const score = lengthScore + complexityScore;
 
         if (score === 2) {
-            this.passwordStrength.textContent = 'Contraseña segura';
+            this.passwordStrength.textContent = 'Contrasena segura';
             this.passwordStrength.className = 'password-strength strong';
         } else if (score === 1) {
-            this.passwordStrength.textContent = 'Contraseña débil (agregá más complejidad)';
+            this.passwordStrength.textContent = 'Contrasena debil (agrega mas complejidad)';
             this.passwordStrength.className = 'password-strength medium';
         } else {
-            this.passwordStrength.textContent = 'Contraseña muy débil';
+            this.passwordStrength.textContent = 'Contrasena muy debil';
             this.passwordStrength.className = 'password-strength weak';
         }
     }
+
+    /**
+     * Genera un resumen legible con los mensajes acumulados.
+     */
+    buildSummaryMessage(defaultMessage) {
+        const uniqueMessages = Array.from(new Set(this.validationSummary.filter(Boolean)));
+        return uniqueMessages.length ? uniqueMessages.join(' ') : defaultMessage;
+    }
+
 
     /**
      * Activa o desactiva el overlay de carga global.
@@ -492,7 +646,24 @@ class AuthManager {
         if (element) {
             element.textContent = message;
         }
+
+        if (message && this.collectingSummary) {
+            this.validationSummary.push(message);
+        }
+
+        if (fieldId.endsWith('Error')) {
+            const inputId = fieldId.replace(/Error$/, '');
+            const field = document.getElementById(inputId);
+            if (field) {
+                if (message) {
+                    field.setAttribute('aria-invalid', 'true');
+                } else {
+                    field.removeAttribute('aria-invalid');
+                }
+            }
+        }
     }
+
 
     /**
      * Limpia los mensajes de error previos.
@@ -505,18 +676,29 @@ class AuthManager {
             'usernameError',
             'registerPasswordError',
             'confirmPasswordError',
+            'acceptTermsError',
             'loginEmailError',
             'loginPasswordError',
         ];
 
         errorIds.forEach((id) => {
+            // Limpiamos el texto y el marcado aria-invalid asociado a cada input.
             const element = document.getElementById(id);
             if (element) {
                 element.textContent = '';
             }
+            const relatedField = document.getElementById(id.replace(/Error$/, ''));
+            relatedField?.removeAttribute('aria-invalid');
         });
+
+        // Reiniciamos el resumen en cada validacion completa.
+        this.validationSummary = [];
+        this.collectingSummary = false;
+        this.lastValidationSummary = '';
     }
 }
+
+// Funciones globales
 
 // Funciones globales utilizadas desde el HTML
 function showLogin() {
