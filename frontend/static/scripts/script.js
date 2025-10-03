@@ -145,6 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter(Boolean);
     }
 
+    function splitByLine(value) {
+        return value
+            .split(/\r?\n|;/)
+            .map((item) => item.trim())
+            .filter(Boolean);
+    }
+
     function parseTeamMax(rawValue) {
         if (!rawValue) return null;
         const numbers = rawValue.match(/\d+/g);
@@ -164,10 +171,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const description = document.getElementById('description')?.value.trim();
         const technologiesRaw = document.getElementById('technologies')?.value || '';
         const skillsRaw = document.getElementById('skills')?.value || '';
+        const objectivesRaw = document.getElementById('objectives')?.value || '';
+        const progressRaw = document.getElementById('progress')?.value;
 
         const teamMax = parseTeamMax(teamSizeRaw);
         const technologies = splitByComma(technologiesRaw);
+        const objectives = splitByLine(objectivesRaw);
         const skillsNeeded = splitByComma(skillsRaw).map((nombre) => ({ nombre, nivel: 'Intermedio' }));
+        const progressNumber = progressRaw === undefined || progressRaw === null || progressRaw === '' ? null : Number(progressRaw);
+        const progress = Number.isFinite(progressNumber) ? Math.min(100, Math.max(0, Math.round(progressNumber))) : null;
 
         return {
             title,
@@ -178,8 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
             duration: duration || null,
             teamMax,
             technologies,
-            objectives: [],
+            objectives,
             skillsNeeded,
+            progress,
         };
     }
 
