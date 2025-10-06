@@ -21,8 +21,12 @@ class ProjectsManager {
     constructor() {
         this.projects = [];
         this.allProjects = [];
+        this.masterProjects = [];
         this.currentProjectIndex = 0;
         this.viewedProjects = new Set();
+        this.interactedProjectIds = new Set();
+        this.includeInteracted = false;
+        this.searchQuery = '';
         this.cardContainer = document.querySelector('.card-container');
         this.projectCard = document.getElementById('project-card');
         this.expandedCard = document.getElementById('expanded-card');
@@ -42,9 +46,31 @@ class ProjectsManager {
             return;
         }
 
+        await this.loadUserInteractions();
         await this.loadProjects();
         this.renderCurrentProject();
         this.attachGlobalHandlers();
+    }
+
+    async loadUserInteractions() {
+        this.interactedProjectIds = new Set();
+        if (!window.apiClient) {
+            return;
+        }
+
+        try {
+            const profile = await window.apiClient.get('/api/users/profile');
+            const liked = Array.isArray(profile?.likedProjectsIds) ? profile.likedProjectsIds : [];
+            const disliked = Array.isArray(profile?.dislikedProjectsIds) ? profile.dislikedProjectsIds : [];
+            [...liked, ...disliked].forEach((projectId) => {
+                const key = this.toProjectKey(projectId);
+                if (key) {
+                    this.interactedProjectIds.add(key);
+                }
+            });
+        } catch (error) {
+            console.warn('No se pudieron obtener las interacciones previas del usuario:', error);
+        }
     }
 
     /**
@@ -54,10 +80,15 @@ class ProjectsManager {
         try {
             const response = await window.apiClient.get('/api/projects');
             const projects = Array.isArray(response) ? response : [];
-            this.projects = projects.map((project) => this.normalizeProject(project)).filter(Boolean);
-            this.allProjects = [...this.projects];
+            this.masterProjects = projects.map((project) => this.normalizeProject(project)).filter(Boolean);
+            this.updateVisibleProjects({ resetView: true });
         } catch (error) {
             console.error('Error al cargar los proyectos:', error);
+            this.masterProjects = [];
+            this.allProjects = [];
+            this.projects = [];
+            this.viewedProjects.clear();
+            this.currentProjectIndex = 0;
             this.showNoProjectsMessage('No se pudieron cargar los proyectos. Intentá nuevamente más tarde.');
         }
     }
@@ -157,12 +188,84 @@ class ProjectsManager {
         };
     }
 
+    updateVisibleProjects({ resetView = false } = {}) {
+        let baseList = this.includeInteracted
+            ? [...this.masterProjects]
+            : this.masterProjects.filter((project) => !this.interactedProjectIds.has(this.toProjectKey(project.id)));
+
+        if (this.searchQuery) {
+            baseList = baseList.filter((project) => this.matchesSearch(project, this.searchQuery));
+        }
+
+        this.allProjects = baseList;
+        this.projects = [...baseList];
+
+        if (resetView || this.projects.length === 0) {
+            this.viewedProjects.clear();
+        } else {
+            const visibleIds = new Set(this.projects.map((project) => project.id));
+            this.viewedProjects = new Set([...this.viewedProjects].filter((id) => visibleIds.has(id)));
+        }
+
+        if (resetView || this.currentProjectIndex >= this.projects.length) {
+            this.currentProjectIndex = 0;
+        }
+    }
+
+    matchesSearch(project, query) {
+        if (!query) {
+            return true;
+        }
+
+        const normalizedTitle = (project.title || '').toLowerCase();
+        if (normalizedTitle.includes(query)) {
+            return true;
+        }
+
+        const techMatch = project.technologies.some((tech) => {
+            const value = typeof tech === 'string' ? tech : tech?.nombre || '';
+            return value.toLowerCase().includes(query);
+        });
+        if (techMatch) {
+            return true;
+        }
+
+        const skillMatch = project.skillsNeeded.some((skill) => {
+            if (typeof skill === 'string') {
+                return skill.toLowerCase().includes(query);
+            }
+            const value = `${skill?.nombre || ''} ${skill?.nivel || ''}`;
+            return value.trim().toLowerCase().includes(query);
+        });
+        return skillMatch;
+    }
+
+    toProjectKey(value) {
+        if (value === null || value === undefined) {
+            return null;
+        }
+        return String(value);
+    }
+
+    markProjectAsInteracted(projectId) {
+        const key = this.toProjectKey(projectId);
+        if (!key) {
+            return;
+        }
+        this.interactedProjectIds.add(key);
+        this.updateVisibleProjects({ resetView: false });
+    }
+
     /**
      * Renderiza el proyecto actual o muestra un mensaje si no hay datos.
      */
     renderCurrentProject() {
         if (this.projects.length === 0) {
-            this.showNoProjectsMessage('Todavía no hay proyectos publicados. ¡Creá el primero!');
+            if (this.masterProjects.length === 0) {
+                this.showNoProjectsMessage('Todavía no hay proyectos publicados. ¡Creá el primero!');
+            } else {
+                this.showAllProjectsViewedMessage();
+            }
             return;
         }
 
@@ -584,9 +687,9 @@ class ProjectsManager {
         this.updateExpandedCard(project);
     }
 
-    restartProjects() {
-        this.viewedProjects.clear();
-        this.currentProjectIndex = 0;
+    restartProjects(includeInteracted = false) {
+        this.includeInteracted = includeInteracted;
+        this.updateVisibleProjects({ resetView: true });
         this.renderCurrentProject();
     }
 
@@ -601,10 +704,12 @@ class ProjectsManager {
 
         if (direction === 'right') {
             await this.registerLike(project.id);
-            this.nextProject();
+            this.markProjectAsInteracted(project.id);
+            this.renderCurrentProject();
         } else if (direction === 'left') {
             await this.registerDislike(project.id);
-            this.nextProject();
+            this.markProjectAsInteracted(project.id);
+            this.renderCurrentProject();
         } else if (direction === 'up') {
             this.updateExpandedCard(project);
             this.expandedCard?.classList.remove('hidden');
@@ -640,30 +745,8 @@ class ProjectsManager {
      * Permite filtrar proyectos por título, tecnologías o habilidades.
      */
     searchProjects(query) {
-        const normalized = (query || '').trim().toLowerCase();
-
-        if (!normalized) {
-            this.projects = [...this.allProjects];
-        } else {
-            this.projects = this.allProjects.filter((project) => {
-                const titleMatch = project.title.toLowerCase().includes(normalized);
-                const techMatch = project.technologies.some((tech) => {
-                    const value = typeof tech === 'string' ? tech : tech?.nombre || '';
-                    return value.toLowerCase().includes(normalized);
-                });
-                const skillMatch = project.skillsNeeded.some((skill) => {
-                    if (typeof skill === 'string') {
-                        return skill.toLowerCase().includes(normalized);
-                    }
-                    const value = `${skill?.nombre || ''} ${skill?.nivel || ''}`;
-                    return value.trim().toLowerCase().includes(normalized);
-                });
-                return titleMatch || techMatch || skillMatch;
-            });
-        }
-
-        this.viewedProjects.clear();
-        this.currentProjectIndex = 0;
+        this.searchQuery = (query || '').trim().toLowerCase();
+        this.updateVisibleProjects({ resetView: true });
         this.renderCurrentProject();
     }
 
@@ -694,7 +777,7 @@ class ProjectsManager {
                 <div class="all-projects-icon">🎉</div>
                 <h2>¡Ya revisaste todos los proyectos!</h2>
                 <p>Reiniciá el listado para volver a examinarlos o esperá nuevos proyectos.</p>
-                <button class="restart-button" onclick="window.projectsManager.restartProjects()">Verlos nuevamente</button>
+                <button class="restart-button" onclick="window.projectsManager.restartProjects(true)">Verlos nuevamente</button>
             </div>
         `;
     }
@@ -716,10 +799,8 @@ class ProjectsManager {
             return;
         }
 
-        this.allProjects.unshift(normalized);
-        this.projects = [...this.allProjects];
-        this.viewedProjects.clear();
-        this.currentProjectIndex = 0;
+        this.masterProjects.unshift(normalized);
+        this.updateVisibleProjects({ resetView: true });
         this.renderCurrentProject();
     }
 }

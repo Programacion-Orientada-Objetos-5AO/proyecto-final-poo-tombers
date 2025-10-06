@@ -1700,6 +1700,12 @@ body.dark-mode .viewing-progress {
     max-width: 400px;
     padding: 0 20px;
     box-sizing: border-box;
+    transition: opacity 0.3s ease;
+}
+
+.create-project-container.dragging {
+    opacity: 0;
+    pointer-events: none;
 }   
 
 .create-project-btn {

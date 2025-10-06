@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const createProjectBtn = document.getElementById('create-project-btn');
     const createProjectCard = document.getElementById('create-project-card');
+    const createProjectContainer = document.querySelector('.create-project-container');
     const cancelCreate = document.getElementById('cancel-create');
     const createForm = document.getElementById('create-form');
     const projectImageInput = document.getElementById('project-image');
@@ -239,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startDrag(event) {
         if (!projectCard || expandedView) return;
+        createProjectContainer?.classList.add('dragging');
         isDragging = true;
         offsetX = 0;
         offsetY = 0;
@@ -300,31 +302,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function endDrag() {
+        createProjectContainer?.classList.remove('dragging');
         if (!isDragging || !projectCard) return;
         isDragging = false;
 
-        projectCard.style.transition = 'transform 0.4s ease';
         statusIndicators && (statusIndicators.style.opacity = '0');
 
-        if (offsetX > 120) {
-            projectCard.style.transform = `translate(${window.innerWidth}px, ${offsetY}px) rotate(25deg)`;
-            setTimeout(() => {
-                resetCardPosition();
-                handleSwipe('right');
-            }, 300);
-        } else if (offsetX < -120) {
-            projectCard.style.transform = `translate(-${window.innerWidth}px, ${offsetY}px) rotate(-25deg)`;
-            setTimeout(() => {
-                resetCardPosition();
-                handleSwipe('left');
-            }, 300);
-        } else if (offsetY < -150) {
+        const horizontalThreshold = 120;
+        const verticalThreshold = 150;
+
+        if (offsetX > horizontalThreshold) {
+            animateSwipe('right');
+        } else if (offsetX < -horizontalThreshold) {
+            animateSwipe('left');
+        } else if (offsetY < -verticalThreshold) {
+            projectCard.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
             projectCard.style.transform = `translate(0, -${window.innerHeight}px) rotate(0deg)`;
+            projectCard.style.opacity = '0';
             setTimeout(() => {
                 expandedCard?.classList.remove('hidden');
                 expandedCard?.classList.add('visible');
                 expandedView = true;
-                resetCardPosition();
+                resetCardPosition(false);
             }, 300);
             handleSwipe('up');
         } else {
@@ -332,9 +331,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function resetCardPosition() {
+    function animateSwipe(direction) {
         if (!projectCard) return;
-        projectCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+        const horizontalDistance = direction === 'right' ? window.innerWidth : -window.innerWidth;
+        const rotation = direction === 'right' ? 25 : -25;
+        const verticalOffset = Math.max(Math.min(offsetY, 200), -200);
+        projectCard.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+        projectCard.style.transform = `translate(${horizontalDistance}px, ${verticalOffset}px) rotate(${rotation}deg)`;
+        projectCard.style.opacity = '0';
+        setTimeout(() => finalizeSwipe(direction), 320);
+    }
+
+    function finalizeSwipe(direction) {
+        const swipeResult = handleSwipe(direction);
+        Promise.resolve(swipeResult).finally(() => {
+            if (!projectCard) return;
+            requestAnimationFrame(() => {
+                projectCard.style.transition = 'none';
+                projectCard.style.transform = `translate(${direction === 'right' ? 40 : -40}px, 0) rotate(0deg)`;
+                projectCard.style.opacity = '0';
+                requestAnimationFrame(() => {
+                    projectCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    projectCard.style.opacity = '1';
+                    projectCard.style.transform = 'translate(0, 0) rotate(0deg)';
+                });
+            });
+        });
+    }
+
+    function resetCardPosition(animate = true) {
+        if (!projectCard) return;
+        projectCard.style.transition = animate ? 'transform 0.3s ease, opacity 0.3s ease' : 'none';
         projectCard.style.transform = 'translate(0, 0) rotate(0deg)';
         projectCard.style.opacity = '1';
     }
