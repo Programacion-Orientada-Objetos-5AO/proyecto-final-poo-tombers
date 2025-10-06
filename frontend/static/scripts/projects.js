@@ -777,7 +777,6 @@ class ProjectsManager {
                 <div class="all-projects-icon">🎉</div>
                 <h2>¡Ya revisaste todos los proyectos!</h2>
                 <p>Reiniciá el listado para volver a examinarlos o esperá nuevos proyectos.</p>
-                <button class="restart-button" onclick="window.projectsManager.restartProjects(true)">Verlos nuevamente</button>
             </div>
         `;
     }
