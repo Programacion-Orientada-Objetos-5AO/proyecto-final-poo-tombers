@@ -240,18 +240,17 @@
         }
 
         .status-circle {
-            width: 30px;
-            height: 30px;
+            width: 15px;
+            height: 15px;
             border-radius: 50%;
             background-color: #4CAF50; /* default green for active */
             position: absolute;
             top: 10px;
             right: 10px;
-            border: 1px solid #4CAF50;
         }
 
         .status-circle.inactive {
-            background-color: #c1cc29; /* yellow */
+            background-color: #fffb17; /* yellow */
         }
 
         .status-circle.ocupado {
@@ -812,7 +811,7 @@ body.dark-mode .like-indicator , body.dark-mode .dislike-indicator {
 }
 
 .status-badge.inactive {
-    background: linear-gradient(135deg, #c1cc29, #cfc24c);
+    background: linear-gradient(135deg, #f0f343, #dfcf3f);
     color: white;
 }
 

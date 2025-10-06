@@ -101,10 +101,28 @@ class ProfileManager {
             expandedTitle.textContent = fullName;
         }
 
+        // Actualizar círculo de estado en la tarjeta no expandida
+        const statusCircle = this.projectCard?.querySelector('.status-circle');
+        if (statusCircle) {
+            statusCircle.className = 'status-circle';
+            if (status === 'INACTIVO') {
+                statusCircle.classList.add('inactive');
+            } else if (status === 'OCUPADO') {
+                statusCircle.classList.add('ocupado');
+            }
+        }
+
         const statusBadge = this.expandedCard?.querySelector('.status-badge');
         if (statusBadge) {
             statusBadge.textContent = this.translateStatus(status);
-            statusBadge.className = `status-badge ${status === 'DISPONIBLE' ? 'active' : ''}`;
+            statusBadge.className = 'status-badge';
+            if (status === 'DISPONIBLE') {
+                statusBadge.classList.add('active');
+            } else if (status === 'INACTIVO') {
+                statusBadge.classList.add('inactive');
+            } else if (status === 'OCUPADO') {
+                statusBadge.classList.add('ocupado');
+            }
         }
 
         const cardStats = this.projectCard?.querySelectorAll('.stats-text');
@@ -558,4 +576,3 @@ class ProfileManager {
 window.addEventListener('DOMContentLoaded', () => {
     window.profileManager = new ProfileManager();
 });
-
