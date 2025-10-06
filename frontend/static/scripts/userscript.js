@@ -125,21 +125,23 @@ class ProfileManager {
             }
         }
 
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Corregir la actualización de estadísticas en la tarjeta pequeña
         const cardStats = this.projectCard?.querySelectorAll('.stats-text');
-        if (cardStats && cardStats.length >= 4) {
+        if (cardStats && cardStats.length >= 3) {
             cardStats[0].textContent = this.profile.age?.toString() || 'N/D';
-            cardStats[1].textContent = this.translateStatus(status);
-            cardStats[2].textContent = this.profile.languages || 'N/D';
-            cardStats[3].textContent = this.profile.specialization || 'N/D';
+            cardStats[1].textContent = this.profile.languages || 'N/D';
+            cardStats[2].textContent = this.profile.specialization || 'N/D';
         }
 
+        // Corregir la actualización de estadísticas en la tarjeta expandida
         const expandedStats = this.expandedCard?.querySelectorAll('.stat-value');
-        if (expandedStats && expandedStats.length >= 4) {
+        if (expandedStats && expandedStats.length >= 3) {
             expandedStats[0].textContent = this.profile.age?.toString() || 'N/D';
-            expandedStats[1].textContent = this.translateStatus(status);
-            expandedStats[2].textContent = this.profile.languages || 'N/D';
-            expandedStats[3].textContent = this.profile.specialization || 'N/D';
+            expandedStats[1].textContent = this.profile.languages || 'N/D';
+            expandedStats[2].textContent = this.profile.specialization || 'N/D';
         }
+        // --- FIN DE LA CORRECCIÓN ---
 
         const cardDescription = this.projectCard?.querySelector('.card-description');
         if (cardDescription) {
