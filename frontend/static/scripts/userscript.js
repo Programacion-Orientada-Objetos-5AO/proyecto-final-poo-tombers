@@ -155,6 +155,7 @@ class ProfileManager {
         this.renderSkills();
         this.renderCertifications();
         this.renderInterests();
+        this.renderContacts();
     }
 
     renderSkills() {
@@ -188,12 +189,13 @@ class ProfileManager {
 
                 const name = document.createElement('span');
                 name.className = 'tech-name';
-                name.textContent = this.getSkillLabel(skill);
+                const skillName = typeof skill === 'string' ? skill : (skill?.nombre || 'Habilidad');
+                name.textContent = skillName;
 
                 const level = document.createElement('span');
                 level.className = 'tech-level';
                 const nivel = typeof skill === 'object' ? skill.nivel : '';
-                level.textContent = nivel || '';
+                level.textContent = nivel ? ` - ${nivel}` : '';
 
                 details.appendChild(name);
                 if (nivel) {
@@ -251,6 +253,53 @@ class ProfileManager {
         });
     }
 
+    renderContacts() {
+        // Renderizar información de contacto en la vista expandida
+        const contactSection = this.expandedCard?.querySelector('.contact-info');
+        if (!contactSection) return;
+
+        contactSection.innerHTML = '';
+
+        const contacts = [
+            { icon: '📧', label: 'Email', value: this.profile.email },
+            { icon: '📱', label: 'Teléfono', value: this.profile.phone },
+            { icon: '💼', label: 'LinkedIn', value: this.profile.linkedin, isLink: true },
+            { icon: '💻', label: 'GitHub', value: this.profile.github, isLink: true },
+            { icon: '🌐', label: 'Portfolio', value: this.profile.portfolio, isLink: true }
+        ];
+
+        contacts.forEach(contact => {
+            if (contact.value) {
+                const item = document.createElement('div');
+                item.className = 'contact-item';
+                item.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px;';
+
+                const icon = document.createElement('span');
+                icon.textContent = contact.icon;
+                icon.style.fontSize = '18px';
+
+                const text = document.createElement('span');
+                text.style.fontSize = '14px';
+                
+                if (contact.isLink) {
+                    const link = document.createElement('a');
+                    link.href = contact.value.startsWith('http') ? contact.value : `https://${contact.value}`;
+                    link.target = '_blank';
+                    link.textContent = contact.value;
+                    link.style.color = '#363F72';
+                    link.style.textDecoration = 'none';
+                    text.appendChild(link);
+                } else {
+                    text.textContent = contact.value;
+                }
+
+                item.appendChild(icon);
+                item.appendChild(text);
+                contactSection.appendChild(item);
+            }
+        });
+    }
+
     openEditModal() {
         if (!this.profile) {
             return;
@@ -301,6 +350,8 @@ class ProfileManager {
         const form = document.createElement('form');
         form.style.display = 'flex';
         form.style.flexDirection = 'column';
+        form.style.gap = '12px';
+
         const imageSection = document.createElement('div');
         imageSection.style.display = 'flex';
         imageSection.style.flexDirection = 'column';
@@ -309,6 +360,7 @@ class ProfileManager {
         const imageLabel = document.createElement('span');
         imageLabel.textContent = 'Foto de perfil';
         imageLabel.style.fontSize = '14px';
+        imageLabel.style.fontWeight = '500';
 
         const imagePreview = document.createElement('img');
         imagePreview.src = this.resolveAsset(this.profile?.profilePictureUrl) || '/static/imagenes/profile-placeholder.svg';
@@ -353,9 +405,9 @@ class ProfileManager {
             { label: 'Idiomas', name: 'languages', type: 'text', value: this.profile.languages || '' },
             { label: 'Especialización', name: 'specialization', type: 'text', value: this.profile.specialization || '' },
             { label: 'Teléfono', name: 'phone', type: 'text', value: this.profile.phone || '' },
-            { label: 'LinkedIn', name: 'linkedin', type: 'text', value: this.profile.linkedin || '' },
-            { label: 'GitHub', name: 'github', type: 'text', value: this.profile.github || '' },
-            { label: 'Portfolio', name: 'portfolio', type: 'text', value: this.profile.portfolio || '' },
+            { label: 'LinkedIn', name: 'linkedin', type: 'text', value: this.profile.linkedin || '', placeholder: 'https://linkedin.com/in/tu-perfil' },
+            { label: 'GitHub', name: 'github', type: 'text', value: this.profile.github || '', placeholder: 'https://github.com/tu-usuario' },
+            { label: 'Portfolio', name: 'portfolio', type: 'text', value: this.profile.portfolio || '', placeholder: 'https://tu-portfolio.com' },
         ];
 
         fields.forEach((field) => {
@@ -364,19 +416,24 @@ class ProfileManager {
             wrapper.style.display = 'flex';
             wrapper.style.flexDirection = 'column';
             wrapper.style.fontSize = '14px';
+            wrapper.style.fontWeight = '500';
             wrapper.style.gap = '4px';
 
             if (field.type === 'select') {
                 const select = document.createElement('select');
                 select.name = field.name;
-                select.value = field.value;
                 select.style.padding = '10px';
                 select.style.borderRadius = '8px';
                 select.style.border = '1px solid #d0d5dd';
+                select.style.fontSize = '14px';
+                
                 field.options.forEach((option) => {
                     const opt = document.createElement('option');
                     opt.value = option;
                     opt.textContent = this.translateStatus(option);
+                    if (option === field.value) {
+                        opt.selected = true;
+                    }
                     select.appendChild(opt);
                 });
                 wrapper.appendChild(select);
@@ -391,6 +448,7 @@ class ProfileManager {
                 input.style.padding = '10px';
                 input.style.borderRadius = '8px';
                 input.style.border = '1px solid #d0d5dd';
+                input.style.fontSize = '14px';
                 wrapper.appendChild(input);
             }
             form.appendChild(wrapper);
@@ -405,11 +463,30 @@ class ProfileManager {
         submit.type = 'submit';
         submit.textContent = 'Guardar cambios';
         submit.className = 'action-btn primary';
-        submit.style.alignSelf = 'flex-end';
-        submit.style.marginTop = '8px';
+        submit.style.cssText = `
+            padding: 12px 24px;
+            background: #363F72;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            align-self: flex-end;
+            margin-top: 8px;
+        `;
+        submit.addEventListener('mouseover', () => {
+            submit.style.background = '#2a3159';
+        });
+        submit.addEventListener('mouseout', () => {
+            submit.style.background = '#363F72';
+        });
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
+            submit.disabled = true;
+            submit.textContent = 'Guardando...';
+            
             const rawFormData = new FormData(form);
             const payload = this.collectUpdatePayload(rawFormData);
 
@@ -420,8 +497,14 @@ class ProfileManager {
                 request.append('profilePicture', profilePicture);
             }
 
-            await this.updateProfile(request);
-            overlay.remove();
+            const success = await this.updateProfile(request);
+            
+            if (success) {
+                overlay.remove();
+            } else {
+                submit.disabled = false;
+                submit.textContent = 'Guardar cambios';
+            }
         });
 
         form.appendChild(submit);
@@ -438,6 +521,7 @@ class ProfileManager {
         wrapper.style.display = 'flex';
         wrapper.style.flexDirection = 'column';
         wrapper.style.fontSize = '14px';
+        wrapper.style.fontWeight = '500';
         wrapper.style.gap = '4px';
 
         const textarea = document.createElement('textarea');
@@ -447,6 +531,9 @@ class ProfileManager {
         textarea.style.padding = '10px';
         textarea.style.borderRadius = '8px';
         textarea.style.border = '1px solid #d0d5dd';
+        textarea.style.fontSize = '14px';
+        textarea.style.fontFamily = 'inherit';
+        textarea.style.resize = 'vertical';
 
         wrapper.appendChild(textarea);
         return wrapper;
@@ -465,21 +552,27 @@ class ProfileManager {
     }
 
     collectUpdatePayload(formData) {
-        const toString = (value) => value ? value.toString().trim() : null;
+        const toString = (value) => {
+            if (!value) return null;
+            const str = value.toString().trim();
+            return str === '' ? null : str;
+        };
 
         const certifications = this.splitByLine(formData.get('certifications'));
         const interests = this.splitByLine(formData.get('interests'));
         const skills = this.splitByLine(formData.get('skills')).map((raw) => {
-            const [nombre, nivel] = raw.split('-').map((part) => part.trim());
+            const parts = raw.split('-').map((part) => part.trim());
+            const nombre = parts[0];
+            const nivel = parts[1] || 'Intermedio';
             if (!nombre) return null;
-            return { nombre, nivel: nivel || 'Intermedio' };
+            return { nombre, nivel };
         }).filter(Boolean);
 
         return {
             firstName: toString(formData.get('firstName')),
             lastName: toString(formData.get('lastName')),
             age: this.parseNumber(formData.get('age')),
-            status: toString(formData.get('status')),
+            status: toString(formData.get('status')) || 'DISPONIBLE',
             languages: toString(formData.get('languages')),
             specialization: toString(formData.get('specialization')),
             phone: toString(formData.get('phone')),
@@ -504,7 +597,9 @@ class ProfileManager {
 
     parseNumber(value) {
         if (!value) return null;
-        const parsed = Number(value);
+        const str = value.toString().trim();
+        if (str === '') return null;
+        const parsed = Number(str);
         return Number.isNaN(parsed) ? null : parsed;
     }
 
@@ -514,10 +609,12 @@ class ProfileManager {
             this.profile = updated;
             this.renderProfile();
             this.showToast('Perfil actualizado correctamente.', 'success');
+            return true;
         } catch (error) {
             console.error('Error al actualizar el perfil:', error);
             const message = error?.message || 'No se pudo guardar el perfil.';
             this.showToast(message, 'error');
+            return false;
         }
     }
 
@@ -567,9 +664,13 @@ class ProfileManager {
             box-shadow: 0 10px 20px rgba(0,0,0,0.15);
             z-index: 11000;
             font-size: 14px;
+            animation: slideIn 0.3s ease-out;
         `;
         document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => toast.remove(), 300);
+        }, 3700);
     }
 }
 
