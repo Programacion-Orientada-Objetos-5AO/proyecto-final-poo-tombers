@@ -1,4 +1,4 @@
-// Archivo: scripts/projects.js
+﻿// Archivo: scripts/projects.js
 // Obtiene proyectos desde el backend y actualiza las vistas del panel principal.
 
 // Utilidad para construir URLs publicas de recursos alojados en el backend.
@@ -377,10 +377,28 @@ class ProjectsManager {
      * Normaliza el porcentaje de avance recibido.
      */
     clampProgress(value) {
-        const numeric = Number(value);
+        if (value === null || value === undefined) {
+            return 0;
+        }
+
+        let normalizedValue = value;
+
+        if (typeof normalizedValue === 'string') {
+            const match = normalizedValue.match(/-?\d+(?:[.,]\d+)?/);
+            if (match) {
+                normalizedValue = match[0].replace(',', '.');
+            }
+        }
+
+        let numeric = Number(normalizedValue);
         if (!Number.isFinite(numeric)) {
             return 0;
         }
+
+        if (numeric > 0 && numeric < 1) {
+            numeric *= 100;
+        }
+
         return Math.min(100, Math.max(0, Math.round(numeric)));
     }
 
