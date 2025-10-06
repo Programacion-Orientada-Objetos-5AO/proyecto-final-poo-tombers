@@ -64,6 +64,9 @@ public class Project {
     @Column(name = "member_id")
     private List<Long> memberIds;
 
+    @Column(name = "creator_id")
+    private Long creatorId;
+
     @ElementCollection
     @Column(name = "like_id")
     private List<Long> likeIds;

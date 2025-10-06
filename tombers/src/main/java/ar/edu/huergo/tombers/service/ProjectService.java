@@ -2,7 +2,11 @@ package ar.edu.huergo.tombers.service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.security.access.AccessDeniedException;
@@ -15,6 +19,7 @@ import ar.edu.huergo.tombers.dto.project.InterestedUsersResponse;
 import ar.edu.huergo.tombers.dto.project.ManageInterestedRequest;
 import ar.edu.huergo.tombers.dto.project.ProjectCreateRequest;
 import ar.edu.huergo.tombers.dto.project.ProjectResponse;
+import ar.edu.huergo.tombers.dto.project.ProjectMemberSummary;
 import ar.edu.huergo.tombers.dto.user.UserResponse;
 import ar.edu.huergo.tombers.entity.Project;
 import ar.edu.huergo.tombers.entity.Skill;
@@ -48,7 +53,7 @@ public class ProjectService {
     public List<ProjectResponse> getAllProjects() {
         List<Project> projects = projectRepository.findAll();
         return projects.stream()
-                .map(projectMapper::toResponse)
+                .map(this::buildDetailedResponse)
                 .toList();
     }
 
@@ -62,7 +67,7 @@ public class ProjectService {
     public ProjectResponse getProjectById(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
-        return projectMapper.toResponse(project);
+        return buildDetailedResponse(project);
     }
 
     /**
@@ -77,6 +82,10 @@ public class ProjectService {
             throw new IllegalArgumentException("El banner del proyecto es obligatorio");
         }
 
+        String userEmail = getAuthenticatedUserEmail();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
         Project project = projectMapper.toEntity(request);
         project.setStatus(resolveStatus(request.getStatus()));
         project.setProgress(resolveProgress(request.getProgress()));
@@ -86,6 +95,7 @@ public class ProjectService {
         if (project.getTeamCurrent() == null) {
             project.setTeamCurrent(0);
         }
+        project.setCreatorId(user.getId());
 
         StoredFile storedBanner = fileStorageService.store(bannerFile, StorageDirectory.PROJECT_BANNER);
         project.setBannerUrl(storedBanner.publicUrl());
@@ -94,16 +104,15 @@ public class ProjectService {
 
         Project savedProject = projectRepository.save(project);
 
-        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
         if (user.getCreatedProjectIds() == null) {
             user.setCreatedProjectIds(new ArrayList<>());
         }
-        user.getCreatedProjectIds().add(savedProject.getId());
+        if (!user.getCreatedProjectIds().contains(savedProject.getId())) {
+            user.getCreatedProjectIds().add(savedProject.getId());
+        }
         userRepository.save(user);
 
-        return projectMapper.toResponse(savedProject);
+        return buildDetailedResponse(savedProject);
     }
 
     /**
@@ -150,7 +159,7 @@ public class ProjectService {
         }
 
         Project updatedProject = projectRepository.save(project);
-        return projectMapper.toResponse(updatedProject);
+        return buildDetailedResponse(updatedProject);
     }
 
     /**
@@ -461,6 +470,77 @@ public class ProjectService {
     /**
      * Convierte el estado recibido en el request a la enumeración de la entidad.
      */
+    private ProjectResponse buildDetailedResponse(Project project) {
+        Long creatorId = resolveCreatorId(project);
+        ProjectResponse response = projectMapper.toResponse(project);
+        response.setCreatorId(creatorId);
+        response.setMembers(resolveMembers(project, creatorId));
+        return response;
+    }
+
+    private Long resolveCreatorId(Project project) {
+        if (project.getCreatorId() != null) {
+            return project.getCreatorId();
+        }
+        if (project.getId() == null) {
+            return null;
+        }
+        return userRepository.findByProjectId(project.getId())
+                .map(User::getId)
+                .orElse(null);
+    }
+
+    private List<ProjectMemberSummary> resolveMembers(Project project, Long creatorId) {
+        Set<Long> participantIds = new LinkedHashSet<>();
+        if (creatorId != null) {
+            participantIds.add(creatorId);
+        }
+        if (project.getMemberIds() != null) {
+            participantIds.addAll(project.getMemberIds());
+        }
+        if (participantIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<User> users = userRepository.findAllById(participantIds);
+        Map<Long, User> usersById = users.stream()
+                .filter(user -> user != null && user.getId() != null)
+                .collect(Collectors.toMap(User::getId, Function.identity(), (existing, replacement) -> existing));
+
+        List<ProjectMemberSummary> members = new ArrayList<>();
+        for (Long userId : participantIds) {
+            boolean isCreator = creatorId != null && creatorId.equals(userId);
+            User member = usersById.get(userId);
+
+            if (member == null) {
+                members.add(ProjectMemberSummary.builder()
+                        .id(userId)
+                        .fullName(isCreator ? "Creador sin datos" : "Integrante sin datos")
+                        .creator(isCreator)
+                        .build());
+                continue;
+            }
+
+            String firstName = StringUtils.hasText(member.getFirstName()) ? member.getFirstName().trim() : "";
+            String lastName = StringUtils.hasText(member.getLastName()) ? member.getLastName().trim() : "";
+            String fullName = (firstName + " " + lastName).trim();
+            if (!StringUtils.hasText(fullName)) {
+                String username = member.getUsernameField();
+                fullName = StringUtils.hasText(username) ? username : member.getEmail();
+            }
+
+            members.add(ProjectMemberSummary.builder()
+                    .id(member.getId())
+                    .fullName(fullName)
+                    .email(member.getEmail())
+                    .profilePictureUrl(member.getProfilePictureUrl())
+                    .creator(isCreator)
+                    .build());
+        }
+
+        return members;
+    }
+
     private Project.ProjectStatus resolveStatus(ProjectCreateRequest.ProjectStatus status) {
         if (status == null) {
             return Project.ProjectStatus.ACTIVE;
@@ -515,14 +595,16 @@ public class ProjectService {
     private String getAuthenticatedUserEmail() {
         try {
             var authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated()) {
+            if (authentication == null) {
                 throw new AccessDeniedException("Usuario no autenticado");
             }
             String email = authentication.getName();
-            if (email == null || email.trim().isEmpty()) {
+            if (!StringUtils.hasText(email)) {
                 throw new AccessDeniedException("Email del usuario autenticado no encontrado");
             }
-            return email;
+            return email.trim();
+        } catch (AccessDeniedException ex) {
+            throw ex;
         } catch (Exception e) {
             throw new AccessDeniedException("Error al obtener usuario autenticado: " + e.getMessage());
         }

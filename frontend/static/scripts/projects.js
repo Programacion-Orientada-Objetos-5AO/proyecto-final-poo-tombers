@@ -114,6 +114,25 @@ class ProjectsManager {
             }))
             .filter((skill) => Boolean(skill.nombre));
 
+        const members = (Array.isArray(project.members) ? project.members : [])
+            .map((member) => {
+                if (!member) {
+                    return null;
+                }
+                const rawName = typeof member.fullName === 'string' ? member.fullName.trim() : '';
+                const name = rawName || 'Integrante sin nombre';
+                const email = typeof member.email === 'string' ? member.email.trim() : '';
+                const avatar = resolveAssetUrl(member.profilePictureUrl) || null;
+                return {
+                    id: typeof member.id === 'number' || typeof member.id === 'string' ? member.id : null,
+                    name,
+                    email,
+                    avatar,
+                    isCreator: Boolean(member.creator),
+                };
+            })
+            .filter(Boolean);
+
         const statusValue = typeof project.status === 'string'
             ? project.status.toUpperCase()
             : typeof project.status?.name === 'string'
@@ -129,6 +148,8 @@ class ProjectsManager {
             technologies,
             objectives,
             skillsNeeded,
+            members,
+            creatorId: project.creatorId ?? null,
             status: statusValue,
             repositoryUrl: project.repositoryUrl || null,
             contactEmail: project.contactEmail || null,
@@ -266,6 +287,9 @@ class ProjectsManager {
             descriptionSection.textContent = project.description;
         }
 
+        const membersContainer = this.expandedCard.querySelector('.members-list');
+        this.renderMembersList(membersContainer, project.members);
+
         this.renderList(
             this.expandedCard.querySelector('.tech-grid'),
             project.technologies,
@@ -283,6 +307,65 @@ class ProjectsManager {
             project.skillsNeeded,
             (skill) => this.buildSkillBadge(skill),
         );
+    }
+
+    renderMembersList(container, members) {
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = '';
+        const normalizedMembers = Array.isArray(members) ? members : [];
+
+        if (normalizedMembers.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'members-empty';
+            emptyState.textContent = 'Aún no hay integrantes confirmados.';
+            container.appendChild(emptyState);
+            return;
+        }
+
+        normalizedMembers.forEach((member) => {
+            const item = document.createElement('div');
+            item.className = 'member-item';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'member-avatar';
+            if (member.avatar) {
+                const img = document.createElement('img');
+                img.src = member.avatar;
+                img.alt = member.name || 'Integrante';
+                avatar.appendChild(img);
+            } else {
+                avatar.textContent = this.getInitials(member.name);
+            }
+
+            const info = document.createElement('div');
+            info.className = 'member-info';
+
+            const name = document.createElement('span');
+            name.className = 'member-name';
+            name.textContent = member.name || 'Integrante sin nombre';
+            info.appendChild(name);
+
+            if (member.email) {
+                const meta = document.createElement('span');
+                meta.className = 'member-meta';
+                meta.textContent = member.email;
+                info.appendChild(meta);
+            }
+
+            if (member.isCreator) {
+                const badge = document.createElement('span');
+                badge.className = 'member-badge';
+                badge.textContent = 'Creador';
+                info.appendChild(badge);
+            }
+
+            item.appendChild(avatar);
+            item.appendChild(info);
+            container.appendChild(item);
+        });
     }
 
     /**

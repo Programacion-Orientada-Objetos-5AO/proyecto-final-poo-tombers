@@ -1021,6 +1021,84 @@ body.dark-mode .like-indicator , body.dark-mode .dislike-indicator {
     gap: 10px;
 }
 
+.members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(194,123,255,0.15);
+    border-radius: 12px;
+}
+
+.member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(194,123,255,0.25);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.member-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.member-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.member-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.member-meta {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+}
+
+.member-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(194,123,255,0.25);
+    border: 1px solid rgba(194,123,255,0.35);
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.members-empty {
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255,255,255,0.65);
+}
+
+
 .skill-badge {
     padding: 8px 16px;
     background: linear-gradient(135deg, rgba(194,123,255,0.2), rgba(159,79,255,0.2));

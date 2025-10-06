@@ -28,6 +28,7 @@ public interface ProjectMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "memberIds", ignore = true)
     @Mapping(target = "likeIds", ignore = true)
+    @Mapping(target = "creatorId", ignore = true)
     Project toEntity(ProjectCreateRequest request);
 
     /**
@@ -38,6 +39,7 @@ public interface ProjectMapper {
      */
     @Mapping(target = "memberIds", source = "memberIds")
     @Mapping(target = "likeIds", source = "likeIds")
+    @Mapping(target = "members", ignore = true)
     ProjectResponse toResponse(Project project);
 
     /**
@@ -51,6 +53,7 @@ public interface ProjectMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "memberIds", ignore = true)
     @Mapping(target = "likeIds", ignore = true)
+    @Mapping(target = "creatorId", ignore = true)
     void updateEntity(@MappingTarget Project project, ProjectCreateRequest request);
 }
 
