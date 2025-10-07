@@ -42,11 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const createProjectBtn = document.getElementById('create-project-btn');
     const createProjectCard = document.getElementById('create-project-card');
     const createProjectContainer = document.querySelector('.create-project-container');
-    const sidebar = document.getElementById('sidebar');
-    const sidebarTrigger = document.getElementById('sidebar-trigger');
-    const desktopThemeToggle = document.getElementById('theme-toggle');
-    const mobileThemeToggle = document.getElementById('theme-togglemo');
-    const themeStorageKey = 'tombers.theme';
     const cancelCreate = document.getElementById('cancel-create');
     const createForm = document.getElementById('create-form');
     const projectImageInput = document.getElementById('project-image');
@@ -54,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewImg = document.getElementById('preview-img');
     const removeImageBtn = document.getElementById('remove-image');
     const imagePlaceholder = imagePreview?.querySelector('.image-placeholder');
-
     let selectedImageDataUrl = null;
     let isDragging = false;
     let startX = 0;
@@ -62,121 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let offsetX = 0;
     let offsetY = 0;
     let expandedView = false;
-    let sidebarHideTimeout = null;
-
-    function syncThemeToggles(isDark) {
-        if (desktopThemeToggle) {
-            desktopThemeToggle.checked = isDark;
-        }
-        if (mobileThemeToggle) {
-            mobileThemeToggle.checked = isDark;
-        }
-    }
-
-    function applyTheme(theme, persist = true) {
-        const isDark = theme === 'dark';
-        document.body.classList.toggle('dark-mode', isDark);
-        syncThemeToggles(isDark);
-        try {
-            if (persist) {
-                localStorage.setItem(themeStorageKey, theme);
-            }
-        } catch {
-            // ignore storage errors (modo incógnito, etc.)
-        }
-    }
-
-    function resolveInitialTheme() {
-        try {
-            const stored = localStorage.getItem(themeStorageKey);
-            if (stored === 'dark' || stored === 'light') {
-                return { theme: stored, fromStorage: true };
-            }
-        } catch {
-            // storage inaccesible, continuar
-        }
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        return { theme: prefersDark ? 'dark' : 'light', fromStorage: false };
-    }
-
-    const { theme: initialTheme, fromStorage: themeFromStorage } = resolveInitialTheme();
-    applyTheme(initialTheme, themeFromStorage);
-
-    const themeChangeHandler = (event) => {
-        const theme = event.target.checked ? 'dark' : 'light';
-        applyTheme(theme, true);
-    };
-
-    desktopThemeToggle?.addEventListener('change', themeChangeHandler);
-    mobileThemeToggle?.addEventListener('change', themeChangeHandler);
-
-    if (window.matchMedia) {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
-        const systemThemeListener = (event) => {
-            try {
-                const stored = localStorage.getItem(themeStorageKey);
-                if (stored === 'dark' || stored === 'light') {
-                    return; // el usuario ya eligió manualmente
-                }
-            } catch {
-                // ignorar
-            }
-            applyTheme(event.matches ? 'dark' : 'light', false);
-        };
-        if (systemTheme.addEventListener) {
-            systemTheme.addEventListener('change', systemThemeListener);
-        } else if (systemTheme.addListener) {
-            systemTheme.addListener(systemThemeListener);
-        }
-    }
-
-    const activateSidebar = () => {
-        if (!sidebar) return;
-        clearTimeout(sidebarHideTimeout);
-        sidebar.classList.add('active');
-    };
-
-    const scheduleHideSidebar = () => {
-        if (!sidebar) return;
-        clearTimeout(sidebarHideTimeout);
-        sidebarHideTimeout = setTimeout(() => {
-            sidebar.classList.remove('active');
-        }, 150);
-    };
-
-    sidebarTrigger?.addEventListener('mouseenter', activateSidebar);
-    sidebarTrigger?.addEventListener('mouseleave', scheduleHideSidebar);
-    sidebar?.addEventListener('mouseenter', activateSidebar);
-    sidebar?.addEventListener('mouseleave', scheduleHideSidebar);
-
-    sidebarTrigger?.addEventListener('click', () => {
-        if (!sidebar) return;
-        const willShow = !sidebar.classList.contains('active');
-        if (willShow) {
-            activateSidebar();
-        } else {
-            sidebar.classList.remove('active');
-        }
-    });
-
-    sidebarTrigger?.addEventListener('touchstart', (event) => {
-        event.preventDefault();
-        if (!sidebar) return;
-        const willShow = !sidebar.classList.contains('active');
-        if (willShow) {
-            activateSidebar();
-        } else {
-            sidebar.classList.remove('active');
-        }
-    }, { passive: false });
-
-    document.addEventListener('touchstart', (event) => {
-        if (!sidebar) return;
-        if (sidebar.contains(event.target) || sidebarTrigger?.contains(event.target)) {
-            return;
-        }
-        sidebar.classList.remove('active');
-    }, { passive: true });
 
     function openCreateModal() {
         if (!createProjectCard) return;
@@ -486,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
         projectCard.style.opacity = '1';
     }
 });
+
 
 
 
