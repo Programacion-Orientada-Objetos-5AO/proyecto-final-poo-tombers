@@ -101,7 +101,6 @@ class ProfileManager {
             expandedTitle.textContent = fullName;
         }
 
-        // Actualizar círculo de estado en la tarjeta no expandida
         const statusCircle = this.projectCard?.querySelector('.status-circle');
         if (statusCircle) {
             statusCircle.className = 'status-circle';
@@ -125,8 +124,6 @@ class ProfileManager {
             }
         }
 
-        // --- INICIO DE LA CORRECCIÓN ---
-        // Corregir la actualización de estadísticas en la tarjeta pequeña
         const cardStats = this.projectCard?.querySelectorAll('.stats-text');
         if (cardStats && cardStats.length >= 3) {
             cardStats[0].textContent = this.profile.age?.toString() || 'N/D';
@@ -134,14 +131,12 @@ class ProfileManager {
             cardStats[2].textContent = this.profile.specialization || 'N/D';
         }
 
-        // Corregir la actualización de estadísticas en la tarjeta expandida
         const expandedStats = this.expandedCard?.querySelectorAll('.stat-value');
         if (expandedStats && expandedStats.length >= 3) {
             expandedStats[0].textContent = this.profile.age?.toString() || 'N/D';
             expandedStats[1].textContent = this.profile.languages || 'N/D';
             expandedStats[2].textContent = this.profile.specialization || 'N/D';
         }
-        // --- FIN DE LA CORRECCIÓN ---
 
         const cardDescription = this.projectCard?.querySelector('.card-description');
         if (cardDescription) {
@@ -256,48 +251,69 @@ class ProfileManager {
     }
 
     renderContacts() {
-        // Renderizar información de contacto en la vista expandida
-        const contactSection = this.expandedCard?.querySelector('.contact-info');
-        if (!contactSection) return;
+        const contactGrid = this.expandedCard?.querySelector('.contact-grid');
+        if (!contactGrid) return;
 
-        contactSection.innerHTML = '';
+        contactGrid.innerHTML = '';
 
         const contacts = [
-            { icon: '📧', label: 'Email', value: this.profile.email },
-            { icon: '📱', label: 'Teléfono', value: this.profile.phone },
-            { icon: '💼', label: 'LinkedIn', value: this.profile.linkedin, isLink: true },
-            { icon: '💻', label: 'GitHub', value: this.profile.github, isLink: true },
-            { icon: '🌐', label: 'Portfolio', value: this.profile.portfolio, isLink: true }
+            { label: 'Email', value: this.profile.email, icon: 'mdi--email-outline' },
+            { label: 'Teléfono', value: this.profile.phone, icon: 'mdi--phone-outline' },
+            { label: 'LinkedIn', value: this.profile.linkedin, icon: 'mdi--linkedin', isLink: true },
+            { label: 'GitHub', value: this.profile.github, icon: 'mdi--github', isLink: true },
+            { label: 'Portfolio', value: this.profile.portfolio, icon: 'mdi--web', isLink: true }
         ];
+
+        const hasAnyContact = contacts.some(contact => contact.value);
+
+        if (!hasAnyContact) {
+            const emptyMessage = document.createElement('div');
+            emptyMessage.className = 'contact-item-empty';
+            emptyMessage.textContent = 'No hay información de contacto disponible';
+            contactGrid.appendChild(emptyMessage);
+            return;
+        }
 
         contacts.forEach(contact => {
             if (contact.value) {
                 const item = document.createElement('div');
                 item.className = 'contact-item';
-                item.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px;';
+
+                const iconWrapper = document.createElement('div');
+                iconWrapper.className = 'contact-icon-wrapper';
 
                 const icon = document.createElement('span');
-                icon.textContent = contact.icon;
-                icon.style.fontSize = '18px';
+                icon.className = `${contact.icon} contact-icon`;
+                iconWrapper.appendChild(icon);
 
-                const text = document.createElement('span');
-                text.style.fontSize = '14px';
-                
+                const content = document.createElement('div');
+                content.className = 'contact-content';
+
+                const label = document.createElement('span');
+                label.className = 'contact-label';
+                label.textContent = contact.label;
+
+                const value = document.createElement('span');
+                value.className = 'contact-value';
+
                 if (contact.isLink) {
                     const link = document.createElement('a');
                     link.href = contact.value.startsWith('http') ? contact.value : `https://${contact.value}`;
                     link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
                     link.textContent = contact.value;
-                    link.style.color = '#363F72';
-                    link.style.textDecoration = 'none';
-                    text.appendChild(link);
+                    link.className = 'contact-link';
+                    value.appendChild(link);
                 } else {
-                    text.textContent = contact.value;
+                    value.textContent = contact.value;
                 }
 
-                item.appendChild(icon);
-                item.appendChild(text);
-                contactSection.appendChild(item);
+                content.appendChild(label);
+                content.appendChild(value);
+
+                item.appendChild(iconWrapper);
+                item.appendChild(content);
+                contactGrid.appendChild(item);
             }
         });
     }

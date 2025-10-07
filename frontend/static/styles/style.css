@@ -9,6 +9,105 @@
     --shadow-dark: rgba(0, 0, 0, 0.4);
 }
 
+/* Sección de contactos */
+.contact-section {
+    margin-top: 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.contact-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.contact-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.contact-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateX(4px);
+}
+
+.contact-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(54, 63, 114, 0.3);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.contact-icon {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.contact-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.contact-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.contact-value {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    word-break: break-word;
+}
+
+.contact-link {
+    color: #8B95D9;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.contact-link:hover {
+    color: #A5AEE8;
+    text-decoration: underline;
+}
+
+.contact-item-empty {
+    padding: 16px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 13px;
+    font-style: italic;
+}
+
 @media (min-width:0px){ /* Feed main*/
         *{
             margin: 0;
