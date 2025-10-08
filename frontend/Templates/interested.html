@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/styles/style.css">
+    <title>TomberS - Interesados</title>
+</head>
+<body data-project-id="{{ project_id }}" data-project-title="{{ project_title or '' }}" style="justify-content: center; align-items: center;">
+    <div class="logo-container">
+        <img src="/static/imagenes/logoTomberS.png" alt="Logo Tomber Sur" class="logo-img">
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="menu-icons">
+            <div class="menu-icon hamburger"></div>
+            <a href="{{ url_for('feed') }}" class="menu-icon house" title="Descubrir proyectos"></a>
+            <a href="{{ url_for('my_projects') }}" class="menu-icon layers" title="Mis proyectos"></a>
+            <a href="{{ url_for('bio') }}" class="menu-icon user" title="Mi perfil"></a>
+            <div class="menu-icon download"></div>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="sidebar-trigger" id="sidebar-trigger"></div>
+
+    <div class="mobile-header" id="mobile-header">
+        <img src="/static/imagenes/logoTomberS.png" alt="Logo Tomber Sur" class="logo-img-mini">
+        <div class="menu-icons">
+            <a href="{{ url_for('feed') }}" class="menu-icon house" title="Descubrir proyectos"></a>
+            <a href="{{ url_for('my_projects') }}" class="menu-icon layers" title="Mis proyectos"></a>
+            <a href="{{ url_for('bio') }}" class="menu-icon user" title="Mi perfil"></a>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="theme-togglemo">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <main class="my-projects-layout">
+        <section class="view-intro">
+            <h1>Personas interesadas</h1>
+            <p>Gestiona quienes quieren sumarse a <strong>{{ project_title or 'tu proyecto' }}</strong>. Desliza a la derecha para aceptarlos, a la izquierda para rechazarlos o hacia arriba para ver su perfil en detalle.</p>
+            <a href="{{ url_for('my_projects') }}" class="link-button" style="margin-top: 8px;">&larr; Volver a mis proyectos</a>
+        </section>
+
+        <div class="card-container">
+            <div class="project-card" id="project-card">
+                <div class="card-title-row">
+                    <h2 class="card-title">No hay personas cargadas</h2>
+                </div>
+                <div class="card-image interested-card-image"></div>
+                <div class="card-stats">
+                    <span><span class="fluent--people-team-16-filled iconos"></span><span class="stats-text">Rol</span></span>
+                    <span><span class="tabler--clock iconos"></span><span class="stats-text">Disponibilidad</span></span>
+                    <span><span class="material-symbols--translate iconos"></span><span class="stats-text">Idiomas</span></span>
+                    <span><span class="mdi--tools iconos"></span><span class="stats-text">Especialidad</span></span>
+                </div>
+                <div class="card-description">
+                    Cuando una persona de la comunidad se interese por tu proyecto vas a poder evaluarla desde esta vista y decidir si la sumas al equipo.
+                </div>
+                <div class="card-tech interested-tech">
+                    <div class="tech-icon">UX</div>
+                    <div class="tech-icon">API</div>
+                    <div class="tech-icon">QA</div>
+                    <div class="tech-icon">PM</div>
+                </div>
+                <div class="owner-actions">
+                    <button id="reject-user-button" class="ghost-button" disabled>Rechazar</button>
+                    <button id="view-user-button" class="ghost-button" disabled>Ver perfil</button>
+                    <button id="accept-user-button" class="primary-button" disabled>Aceptar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-indicators" id="status-indicators">
+            <div class="dislike-indicator">Rechazar</div>
+            <div class="ampliar-indicator">Ver perfil</div>
+            <div class="like-indicator">Aceptar</div>
+        </div>
+    </main>
+
+    <div class="expanded-card hidden" id="expanded-card">
+        <button class="close-expanded" id="close-expanded">&times;</button>
+        <div class="expanded-content">
+            <div class="expanded-header">
+                <h2 class="expanded-title">Nombre completo</h2>
+                <div class="expanded-status">
+                    <span class="status-badge active" id="expanded-status">Disponible</span>
+                </div>
+            </div>
+
+            <div class="expanded-main">
+                <div class="expanded-left">
+                    <div class="expanded-image">
+                        <img src="/static/imagenes/profile-placeholder.svg" alt="Foto de perfil" id="expanded-avatar">
+                        <div class="image-overlay">
+                            <span class="view-badge">Perfil</span>
+                        </div>
+                    </div>
+
+                    <div class="expanded-stats-grid">
+                        <div class="stat-item">
+                            <span class="fluent--people-team-16-filled"></span>
+                            <div class="stat-content">
+                                <span class="stat-label">Edad</span>
+                                <span class="stat-value" id="expanded-age">--</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="mdi--tools"></span>
+                            <div class="stat-content">
+                                <span class="stat-label">Rol</span>
+                                <span class="stat-value" id="expanded-role">--</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="material-symbols--translate"></span>
+                            <div class="stat-content">
+                                <span class="stat-label">Idiomas</span>
+                                <span class="stat-value" id="expanded-languages">--</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="tabler--clock"></span>
+                            <div class="stat-content">
+                                <span class="stat-label">Intereses</span>
+                                <span class="stat-value" id="expanded-interests-count">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="owner-actions expanded-actions">
+                        <button class="ghost-button" id="expanded-reject-button">Rechazar</button>
+                        <button class="primary-button" id="expanded-accept-button">Aceptar</button>
+                    </div>
+                </div>
+
+                <div class="expanded-right">
+                    <div class="section">
+                        <h3>Bio</h3>
+                        <div class="section-content" id="expanded-bio">
+                            La persona todav&iacute;a no cargo una presentaci&oacute;n personal.
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Habilidades destacadas</h3>
+                        <div class="skills-grid" id="expanded-skills"></div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Intereses</h3>
+                        <div class="objectives-list" id="expanded-interests"></div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Links y contacto</h3>
+                        <div class="members-list" id="expanded-links"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/scripts/apiClient.js"></script>
+    <script src="/static/scripts/uiCommon.js"></script>
+    <script src="/static/scripts/interested.js"></script>
+</body>
+</html>

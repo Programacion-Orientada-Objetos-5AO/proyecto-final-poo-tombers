@@ -18,15 +18,23 @@ const resolveAssetUrl = (path) => {
 window.resolveAssetUrl = window.resolveAssetUrl || resolveAssetUrl;
 
 class ProjectsManager {
-    constructor() {
+    constructor(options = {}) {
+        this.options = { ...options };
+        this.mode = this.options.mode || 'feed';
         this.projects = [];
         this.allProjects = [];
         this.masterProjects = [];
         this.currentProjectIndex = 0;
         this.viewedProjects = new Set();
         this.interactedProjectIds = new Set();
-        this.includeInteracted = false;
+        this.includeInteracted = this.options.includeInteracted ?? false;
+        if (this.mode === 'my-projects') {
+            this.includeInteracted = true;
+        }
         this.searchQuery = '';
+        this.currentUserProfile = null;
+        this.currentUserId = null;
+        this.ownedProjectIds = new Set();
         this.cardContainer = document.querySelector('.card-container');
         this.projectCard = document.getElementById('project-card');
         this.expandedCard = document.getElementById('expanded-card');
@@ -60,6 +68,23 @@ class ProjectsManager {
 
         try {
             const profile = await window.apiClient.get('/api/users/profile');
+            this.currentUserProfile = profile || null;
+            const rawUserId = profile?.id;
+            const parsedUserId = rawUserId !== null && rawUserId !== undefined ? Number(rawUserId) : null;
+            this.currentUserId = Number.isFinite(parsedUserId) ? parsedUserId : null;
+            const createdIdsSource = Array.isArray(profile?.createdProjectsIds)
+                ? profile?.createdProjectsIds
+                : Array.isArray(profile?.createdProjectIds)
+                    ? profile?.createdProjectIds
+                    : [];
+            this.ownedProjectIds = new Set(
+                (createdIdsSource || [])
+                    .map((value) => {
+                        const numeric = Number(value);
+                        return Number.isFinite(numeric) ? numeric : null;
+                    })
+                    .filter((value) => value !== null)
+            );
             const liked = Array.isArray(profile?.likedProjectsIds) ? profile.likedProjectsIds : [];
             const disliked = Array.isArray(profile?.dislikedProjectsIds) ? profile.dislikedProjectsIds : [];
             [...liked, ...disliked].forEach((projectId) => {
@@ -169,9 +194,14 @@ class ProjectsManager {
             : typeof project.status?.name === 'string'
                 ? project.status.name.toUpperCase()
                 : 'ACTIVE';
+        const numericProjectId = Number(project.id);
+        const resolvedProjectId = Number.isFinite(numericProjectId) ? numericProjectId : (project.id ?? null);
+        const numericCreatorId = Number(project.creatorId);
+        const resolvedCreatorId = Number.isFinite(numericCreatorId) ? numericCreatorId : (project.creatorId ?? null);
+        const isOwner = this.isProjectOwnedByCurrentUser(resolvedProjectId, resolvedCreatorId);
 
         return {
-            id: project.id,
+            id: resolvedProjectId,
             title: project.title || 'Proyecto sin título',
             description: project.description || 'Sin descripción disponible.',
             bannerUrl: resolveAssetUrl(project.bannerUrl) || '/static/imagenes/coding-foto-ejemplo.jpg',
@@ -180,7 +210,8 @@ class ProjectsManager {
             objectives,
             skillsNeeded,
             members,
-            creatorId: project.creatorId ?? null,
+            creatorId: resolvedCreatorId,
+            isOwner,
             status: statusValue,
             repositoryUrl: project.repositoryUrl || null,
             contactEmail: project.contactEmail || null,
@@ -195,6 +226,10 @@ class ProjectsManager {
 
         if (this.searchQuery) {
             baseList = baseList.filter((project) => this.matchesSearch(project, this.searchQuery));
+        }
+
+        if (this.mode === 'my-projects') {
+            baseList = baseList.filter((project) => project?.isOwner);
         }
 
         this.allProjects = baseList;
@@ -247,6 +282,27 @@ class ProjectsManager {
         return String(value);
     }
 
+    isProjectOwnedByCurrentUser(projectId, creatorId) {
+        if (projectId !== null && projectId !== undefined) {
+            const numericProjectId = Number(projectId);
+            if (Number.isFinite(numericProjectId) && this.ownedProjectIds.has(numericProjectId)) {
+                return true;
+            }
+        }
+
+        if (this.currentUserId !== null && this.currentUserId !== undefined && creatorId !== null && creatorId !== undefined) {
+            const numericCreatorId = Number(creatorId);
+            if (Number.isFinite(numericCreatorId)) {
+                return numericCreatorId === this.currentUserId;
+            }
+            if (String(creatorId) === String(this.currentUserId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     markProjectAsInteracted(projectId) {
         const key = this.toProjectKey(projectId);
         if (!key) {
@@ -262,7 +318,13 @@ class ProjectsManager {
     renderCurrentProject() {
         if (this.projects.length === 0) {
             if (this.masterProjects.length === 0) {
-                this.showNoProjectsMessage('Todavía no hay proyectos publicados. ¡Creá el primero!');
+                const emptyMessage = this.mode === 'my-projects'
+                    ? 'Todavia no creaste proyectos.'
+                    : 'Todavia no hay proyectos publicados. Crea el primero!';
+                const emptyDescription = this.mode === 'my-projects'
+                    ? 'Anda al feed y usa el boton "Crear proyecto" para publicar uno nuevo.'
+                    : 'Podes crear un proyecto nuevo con el boton "Crear proyecto".';
+                this.showNoProjectsMessage(emptyMessage, emptyDescription);
             } else {
                 this.showAllProjectsViewedMessage();
             }
@@ -702,6 +764,19 @@ class ProjectsManager {
             return;
         }
 
+        if (this.mode === 'my-projects') {
+            if (direction === 'right') {
+                this.nextProject();
+            } else if (direction === 'left') {
+                this.previousProject();
+            } else if (direction === 'up') {
+                this.updateExpandedCard(project);
+                this.expandedCard?.classList.remove('hidden');
+                this.expandedCard?.classList.add('visible');
+            }
+            return;
+        }
+
         if (direction === 'right') {
             await this.registerLike(project.id);
             this.markProjectAsInteracted(project.id);
@@ -750,15 +825,19 @@ class ProjectsManager {
         this.renderCurrentProject();
     }
 
-    showNoProjectsMessage(message) {
+    showNoProjectsMessage(message, description = null) {
         if (!this.cardContainer) {
             return;
         }
 
+        const resolvedDescription = description ?? (this.mode === 'my-projects'
+            ? 'Anda al feed y crea un proyecto para verlo aca.'
+            : 'Podes crear un proyecto nuevo con el boton "Crear proyecto".');
+
         this.cardContainer.innerHTML = `
             <div class="empty-state">
                 <h2>${message}</h2>
-                <p>Podés crear un proyecto nuevo con el botón “Crear proyecto”.</p>
+                <p>${resolvedDescription}</p>
             </div>
         `;
         const indicators = document.getElementById('status-indicators');
@@ -772,11 +851,18 @@ class ProjectsManager {
             return;
         }
 
+        const heading = this.mode === 'my-projects'
+            ? 'Ya recorriste todos tus proyectos'
+            : 'Ya revisaste todos los proyectos';
+        const description = this.mode === 'my-projects'
+            ? 'Volve al feed para crear uno nuevo o usa el boton "Editar" para actualizar los existentes.'
+            : 'Crea tu propio proyecto o espera otros nuevos.';
+
         this.cardContainer.innerHTML = `
             <div class="all-projects-viewed-message">
                 <div class="all-projects-icon">🎉</div>
-                <h2>¡Ya revisaste todos los proyectos!</h2>
-                <p>Crea tu propio proyecto o espera otros nuevos.</p>
+                <h2>${heading}</h2>
+                <p>${description}</p>
             </div>
         `;
     }
@@ -787,6 +873,58 @@ class ProjectsManager {
         const remaining = Math.max(total - viewed, 0);
         const percentage = total > 0 ? Math.round((viewed / total) * 100) : 0;
         return { total, viewed, remaining, percentage };
+    }
+
+
+    upsertProject(projectResponse, { focusCurrent = true } = {}) {
+        const normalized = this.normalizeProject(projectResponse);
+        if (!normalized || normalized.id === null || normalized.id === undefined) {
+            return;
+        }
+
+        const replaceIn = (list) => {
+            if (!Array.isArray(list)) {
+                return false;
+            }
+            const index = list.findIndex((item) => item && item.id === normalized.id);
+            if (index !== -1) {
+                list[index] = normalized;
+                return true;
+            }
+            return false;
+        };
+
+        let replaced = false;
+        replaced = replaceIn(this.masterProjects) || replaced;
+        replaced = replaceIn(this.allProjects) || replaced;
+        replaced = replaceIn(this.projects) || replaced;
+
+        if (!replaced) {
+            this.masterProjects.push(normalized);
+        }
+
+        if (focusCurrent) {
+            this.viewedProjects.delete(normalized.id);
+        }
+
+        this.updateVisibleProjects({ resetView: false });
+
+        if (focusCurrent) {
+            const index = this.projects.findIndex((item) => item && item.id === normalized.id);
+            if (index !== -1) {
+                this.currentProjectIndex = index;
+            }
+        }
+
+        const current = this.getCurrentProject();
+        if (current && current.id === normalized.id) {
+            this.updateProjectCard(normalized);
+            this.updateExpandedCard(normalized);
+        }
+
+        if (focusCurrent) {
+            this.renderCurrentProject();
+        }
     }
 
     /**
@@ -804,9 +942,21 @@ class ProjectsManager {
     }
 }
 
+window.ProjectsManager = ProjectsManager;
+
 // Instancia global para que otros scripts puedan interactuar.
 document.addEventListener('DOMContentLoaded', () => {
-    window.projectsManager = new ProjectsManager();
+    const viewMode = document.body?.dataset?.viewMode || 'feed';
+    let ManagerClass = ProjectsManager;
+
+    if (typeof window.resolveProjectsManagerClass === 'function') {
+        const resolved = window.resolveProjectsManagerClass(viewMode, ProjectsManager);
+        if (resolved) {
+            ManagerClass = resolved;
+        }
+    }
+
+    window.projectsManager = new ManagerClass({ mode: viewMode });
 });
 
 // Funciones auxiliares utilizadas por otras partes del frontend.

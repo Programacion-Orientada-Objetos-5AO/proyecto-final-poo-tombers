@@ -732,6 +732,12 @@ body.dark-mode .like-indicator , body.dark-mode .dislike-indicator {
             mask-image: var(--svg);
         }
 
+        .menu-icon.layers {
+            --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M4 5h16v2H4zM6 9h12v2H6zM8 13h8v2H8z'/%3E%3C/svg%3E");
+            -webkit-mask-image: var(--svg);
+            mask-image: var(--svg);
+        }
+
         .toggle-switch {
             position: relative;
             width: 40px;
@@ -2253,3 +2259,297 @@ body {
         padding-bottom: 65px;
     }
 }
+
+/* Mis proyectos */
+.my-projects-layout {
+    width: min(1080px, 100%);
+    margin: 0 auto;
+    padding: 32px 24px 88px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.view-intro h1 {
+    font-size: clamp(1.8rem, 2.4vw, 2.6rem);
+    margin: 0;
+}
+
+.view-intro p {
+    margin: 8px 0 0;
+    max-width: 540px;
+    color: rgba(226, 232, 240, 0.78);
+    line-height: 1.6;
+}
+
+.owner-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.owner-actions .ghost-button,
+.owner-actions .primary-button {
+    flex: 1 1 0;
+}
+
+.expanded-actions {
+    margin-top: 28px;
+    justify-content: flex-start;
+}
+
+.expanded-actions .ghost-button,
+.expanded-actions .primary-button {
+    flex: unset;
+    min-width: 150px;
+}
+
+.primary-button,
+.ghost-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+}
+
+.primary-button {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 14px 28px rgba(124, 58, 237, 0.35);
+}
+
+.primary-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 34px rgba(124, 58, 237, 0.4);
+}
+
+.primary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.ghost-button {
+    background: rgba(255, 255, 255, 0.08);
+    color: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.ghost-button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+.ghost-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.link-button {
+    border: none;
+    background: transparent;
+    color: #8b5cf6;
+    font-weight: 600;
+    padding: 0;
+    cursor: pointer;
+}
+
+.link-button:hover {
+    text-decoration: underline;
+}
+
+.project-edit-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(14px);
+    z-index: 4000;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.project-edit-modal.hidden {
+    display: none;
+}
+
+.project-edit-modal.visible {
+    opacity: 1;
+}
+
+.project-edit-dialog {
+    width: min(880px, 100%);
+    max-height: 92vh;
+    overflow-y: auto;
+    background: var(--card-bg, #1f1b2a);
+    color: var(--white);
+    border-radius: 20px;
+    padding: 30px 32px;
+    box-shadow: 0 24px 54px rgba(15, 23, 42, 0.45);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.project-edit-dialog::-webkit-scrollbar {
+    width: 8px;
+}
+
+.project-edit-dialog::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.4);
+    border-radius: 4px;
+}
+
+.close-edit {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: inherit;
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.close-edit:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.edit-subtitle {
+    margin: 0;
+    color: rgba(203, 213, 225, 0.78);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-field.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(226, 232, 240, 0.86);
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(15, 23, 42, 0.35);
+    color: inherit;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: none;
+    border-color: rgba(139, 92, 246, 0.75);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+}
+
+.banner-input {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.banner-input img {
+    width: 150px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.banner-input input[type="file"] {
+    border: none;
+    padding: 0;
+    background: transparent;
+}
+
+.banner-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.my-projects-layout .card-container {
+    position: relative;
+    min-height: 440px;
+}
+
+@media (max-width: 960px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .owner-actions {
+        flex-direction: column;
+    }
+
+    .expanded-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .banner-input {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 640px) {
+    .my-projects-layout {
+        padding: 24px 18px 72px;
+        gap: 24px;
+    }
+
+    .view-intro p {
+        font-size: 0.95rem;
+    }
+}
+
