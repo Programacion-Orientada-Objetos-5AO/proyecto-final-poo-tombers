@@ -2263,7 +2263,7 @@ body {
 /* Mis proyectos */
 .my-projects-layout {
     width: min(1080px, 100%);
-    margin: 0 auto;
+    margin: auto;
     padding: 32px 24px 88px;
     display: flex;
     flex-direction: column;
@@ -2272,7 +2272,7 @@ body {
 .view-intro h1 {
     font-size: clamp(1.8rem, 2.4vw, 2.6rem);
     margin: 0;
-    margin-top: 150px;  
+    margin-top: 75px;  
 }
 
 .view-intro p {
