@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/static/styles/style.css">
     <title>TomberS - Mis proyectos</title>
 </head>
-<body data-view-mode="my-projects" style="justify-content: center; align-items: center;">
+<body class="page-view" data-view-mode="my-projects">
     <div class="logo-container">
         <img src="/static/imagenes/logoTomberS.png" alt="Logo Tomber Sur" class="logo-img">
     </div>
@@ -39,10 +39,10 @@
         </label>
     </div>
 
-    <main class="my-projects-layout">
+    <main class="my-projects-layout" role="main">
         <section class="view-intro">
             <h1>Mis proyectos</h1>
-            <p>Lleva un seguimiento de lo que creaste para la comunidad. Desliza las cartas para navegar entre tus proyectos o arrastralas hacia arriba para ver cada detalle.</p>
+            <p>Lleva un seguimiento de lo que creaste para la comunidad. Desliza las cartas para navegar entre tus proyectos o arrástralas hacia arriba para ver cada detalle.</p>
         </section>
 
         <div class="card-container">
@@ -55,10 +55,10 @@
                     <span><span class="fluent--people-team-16-filled iconos"></span><span class="stats-text">00/00</span></span>
                     <span><span class="tabler--clock iconos"></span><span class="stats-text">Sin definir</span></span>
                     <span><span class="material-symbols--translate iconos"></span><span class="stats-text">Idioma</span></span>
-                    <span><span class="mdi--tools iconos"></span><span class="stats-text">Area</span></span>
+                    <span><span class="mdi--tools iconos"></span><span class="stats-text">Área</span></span>
                 </div>
                 <div class="card-description">
-                    Usa el feed de proyectos para crear una iniciativa. Una vez publicada se mostrara aca para que puedas actualizarla y gestionar quienes se postularon.
+                    Usa el feed de proyectos para crear una iniciativa. Una vez publicada se mostrará acá para que puedas actualizarla y gestionar a quienes se postularon.
                 </div>
                 <div class="card-tech">
                     <div class="tech-icon">UX</div>
@@ -80,7 +80,7 @@
 
         <div class="status-indicators" id="status-indicators">
             <div class="dislike-indicator">Anterior</div>
-            <div class="ampliar-indicator">Ver más</div>
+            <div class="ampliar-indicator">Ver mÃ¡s</div>
             <div class="like-indicator">Siguiente</div>
         </div>
     </main>
@@ -115,7 +115,7 @@
                         <div class="stat-item">
                             <span class="tabler--clock"></span>
                             <div class="stat-content">
-                                <span class="stat-label">Duración</span>
+                                <span class="stat-label">DuraciÃ³n</span>
                                 <span class="stat-value">Sin definir</span>
                             </div>
                         </div>
@@ -123,13 +123,13 @@
                             <span class="material-symbols--translate"></span>
                             <div class="stat-content">
                                 <span class="stat-label">Idioma</span>
-                                <span class="stat-value">Español</span>
+                                <span class="stat-value">EspaÃ±ol</span>
                             </div>
                         </div>
                         <div class="stat-item">
                             <span class="mdi--tools"></span>
                             <div class="stat-content">
-                                <span class="stat-label">Área</span>
+                                <span class="stat-label">Ãrea</span>
                                 <span class="stat-value">General</span>
                             </div>
                         </div>
@@ -184,7 +184,7 @@
         <div class="project-edit-dialog">
             <button class="close-edit" id="close-project-edit">&times;</button>
             <h2>Editar proyecto</h2>
-            <p class="edit-subtitle">Actualiza la informacion y manten a tu equipo siempre alineado.</p>
+            <p class="edit-subtitle">Actualiza la información y mantén a tu equipo siempre alineado.</p>
 
             <form id="project-edit-form">
                 <div class="form-grid">
@@ -197,14 +197,14 @@
                         <span class="form-label">Estado</span>
                         <select id="edit-project-status">
                             <option value="ACTIVE">Activo</option>
-                            <option value="ON_HOLD">En planificacion</option>
+                            <option value="ON_HOLD">En planificación</option>
                             <option value="INACTIVE">En pausa</option>
                             <option value="COMPLETED">Completado</option>
                         </select>
                     </label>
 
                     <label class="form-field">
-                        <span class="form-label">Duración estimada</span>
+                        <span class="form-label">DuraciÃ³n estimada</span>
                         <input type="text" id="edit-project-duration" maxlength="100">
                     </label>
 
@@ -214,33 +214,33 @@
                     </label>
 
                     <label class="form-field">
-                        <span class="form-label">Tipo / área</span>
+                        <span class="form-label">Tipo / Ã¡rea</span>
                         <input type="text" id="edit-project-type" maxlength="100">
                     </label>
 
                     <label class="form-field">
-                        <span class="form-label">Tamaño del equipo (max)</span>
+                        <span class="form-label">TamaÃ±o del equipo (máx.)</span>
                         <input type="number" id="edit-project-team-max" min="1" max="99">
                     </label>
 
                     <label class="form-field full-width">
-                        <span class="form-label">Descripción</span>
+                        <span class="form-label">DescripciÃ³n</span>
                         <textarea id="edit-project-description" rows="4" required></textarea>
                     </label>
 
                     <label class="form-field full-width">
-                        <span class="form-label">Tecnologias (separadas por coma)</span>
+                        <span class="form-label">Tecnologías (separadas por coma)</span>
                         <input type="text" id="edit-project-technologies">
                     </label>
 
                     <label class="form-field full-width">
-                        <span class="form-label">Objetivos (uno por linea)</span>
+                        <span class="form-label">Objetivos (uno por línea)</span>
                         <textarea id="edit-project-objectives" rows="3"></textarea>
                     </label>
 
                     <label class="form-field full-width">
-                        <span class="form-label">Habilidades requeridas (una por linea, formato Nombre | Nivel)</span>
-                        <textarea id="edit-project-skills" rows="3" placeholder="Diseño UX | Intermedio"></textarea>
+                        <span class="form-label">Habilidades requeridas (una por línea, formato Nombre | Nivel)</span>
+                        <textarea id="edit-project-skills" rows="3" placeholder="DiseÃ±o UX | Intermedio"></textarea>
                     </label>
 
                     <label class="form-field">

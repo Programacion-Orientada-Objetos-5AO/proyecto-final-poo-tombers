@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/static/styles/style.css">
     <title>TomberS - Interesados</title>
 </head>
-<body data-project-id="{{ project_id }}" data-project-title="{{ project_title or '' }}" style="justify-content: center; align-items: center;">
+<body class="page-view" data-project-id="{{ project_id }}" data-project-title="{{ project_title or '' }}">
     <div class="logo-container">
         <img src="/static/imagenes/logoTomberS.png" alt="Logo Tomber Sur" class="logo-img">
     </div>
@@ -39,10 +39,10 @@
         </label>
     </div>
 
-    <main class="my-projects-layout">
+    <main class="my-projects-layout" role="main">
         <section class="view-intro">
             <h1>Personas interesadas</h1>
-            <p>Gestiona quienes quieren sumarse a <strong>{{ project_title or 'tu proyecto' }}</strong>. Desliza a la derecha para aceptarlos, a la izquierda para rechazarlos o hacia arriba para ver su perfil en detalle.</p>
+            <p>Gestiona a quienes quieren sumarse a <strong>{{ project_title or 'tu proyecto' }}</strong>. Desliza a la derecha para aceptarlos, a la izquierda para rechazarlos o hacia arriba para ver su perfil en detalle.</p>
             <a href="{{ url_for('my_projects') }}" class="link-button" style="margin-top: 8px;">&larr; Volver a mis proyectos</a>
         </section>
 
@@ -59,7 +59,7 @@
                     <span><span class="mdi--tools iconos"></span><span class="stats-text">Especialidad</span></span>
                 </div>
                 <div class="card-description">
-                    Cuando una persona de la comunidad se interese por tu proyecto vas a poder evaluarla desde esta vista y decidir si la sumas al equipo.
+                    Cuando una persona de la comunidad se interese por tu proyecto vas a poder evaluarla desde esta vista y decidir si la sumás al equipo.
                 </div>
                 <div class="card-tech interested-tech">
                     <div class="tech-icon">UX</div>
@@ -142,7 +142,7 @@
                     <div class="section">
                         <h3>Bio</h3>
                         <div class="section-content" id="expanded-bio">
-                            La persona todav&iacute;a no cargo una presentaci&oacute;n personal.
+                            La persona todavía no cargó una presentación personal.
                         </div>
                     </div>
 
