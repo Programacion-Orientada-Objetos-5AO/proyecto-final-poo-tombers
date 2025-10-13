@@ -376,7 +376,7 @@
     transition: all 0.3s ease;
     width: 240px; /* Bigger circle */
     height: 70px; /* Bigger circle */
-    margin-left: 5px; /* Space to the right of name */
+    margin-left: 1px; /* Space to the right of name */
 }
 
 .star-rating-expanded:hover {
