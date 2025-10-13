@@ -40,10 +40,30 @@
     </div>
 
     <main class="my-projects-layout" role="main">
-        <section class="view-intro">
-            <h1>Personas interesadas</h1>
-            <p>Gestiona a quienes quieren sumarse a <strong>{{ project_title or 'tu proyecto' }}</strong>. Desliza a la derecha para aceptarlos, a la izquierda para rechazarlos o hacia arriba para ver su perfil en detalle.</p>
-            <a href="{{ url_for('my_projects') }}" class="link-button" style="margin-top: 8px;">&larr; Volver a mis proyectos</a>
+        <section class="view-intro hero-block" aria-labelledby="hero-heading">
+            <span class="hero-eyebrow">Gestión de talento</span>
+            <h1 id="hero-heading">Personas interesadas</h1>
+            <p class="hero-description">Evalúa cada postulación y responde rápido para mantener el entusiasmo del equipo.</p>
+
+            <div class="hero-summary" aria-label="Resumen de postulaciones">
+                <div class="hero-summary__item">
+                    <span class="hero-summary__label">Totales</span>
+                    <span class="hero-summary__value" id="hero-total-interested">0</span>
+                </div>
+                <div class="hero-summary__item">
+                    <span class="hero-summary__label">Disponibles</span>
+                    <span class="hero-summary__value" id="hero-available-interested">0</span>
+                </div>
+                <div class="hero-summary__item">
+                    <span class="hero-summary__label">Aceptados</span>
+                    <span class="hero-summary__value" id="hero-accepted-interested">0</span>
+                </div>
+            </div>
+
+            <div class="hero-actions">
+                <a href="{{ url_for('my_projects') }}" class="hero-button secondary">Volver a mis proyectos</a>
+                <button type="button" class="hero-button primary" id="hero-open-profile">Abrir perfil destacado</button>
+            </div>
         </section>
 
         <div class="card-container">
@@ -163,5 +183,74 @@
     <script src="/static/scripts/apiClient.js"></script>
     <script src="/static/scripts/uiCommon.js"></script>
     <script src="/static/scripts/interested.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const totalEl = document.getElementById('hero-total-interested');
+            const availableEl = document.getElementById('hero-available-interested');
+            const acceptedEl = document.getElementById('hero-accepted-interested');
+            const openProfileBtn = document.getElementById('hero-open-profile');
+
+            if (!totalEl || !availableEl || !acceptedEl) {
+                return;
+            }
+
+            const renderFromDeck = () => {
+                const deck = window.interestedDeck;
+                if (!deck) {
+                    return;
+                }
+                const users = Array.isArray(deck.users) ? deck.users : [];
+                const total = users.length;
+                const available = users.filter(
+                    (user) => (user.status || '').toUpperCase() === 'DISPONIBLE',
+                ).length;
+                const accepted = Number(deck.acceptedCount || 0);
+                totalEl.textContent = total;
+                availableEl.textContent = available;
+                acceptedEl.textContent = accepted;
+            };
+
+            const attach = () => {
+                const deck = window.interestedDeck;
+                if (!deck) {
+                    requestAnimationFrame(attach);
+                    return;
+                }
+                if (typeof deck.setSummaryCallback === 'function') {
+                    deck.setSummaryCallback((detail) => {
+                        if (detail) {
+                            totalEl.textContent = detail.total;
+                            availableEl.textContent = detail.available;
+                            acceptedEl.textContent = detail.accepted;
+                        } else {
+                            renderFromDeck();
+                        }
+                    });
+                } else if (!deck.__heroSummaryInterval) {
+                    deck.__heroSummaryInterval = window.setInterval(renderFromDeck, 1500);
+                }
+                renderFromDeck();
+            };
+            attach();
+
+            openProfileBtn?.addEventListener('click', () => {
+                const deck = window.interestedDeck;
+                if (!deck) {
+                    return;
+                }
+                const current =
+                    (typeof deck.getCurrentUser === 'function' && deck.getCurrentUser()) ||
+                    deck.users?.[deck.currentIndex] ||
+                    null;
+                if (!current) {
+                    if (typeof showToastMessage === 'function') {
+                        showToastMessage('No hay postulaciones para mostrar.', 'aviso');
+                    }
+                    return;
+                }
+                deck.openExpanded?.();
+            });
+        });
+    </script>
 </body>
 </html>

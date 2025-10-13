@@ -40,9 +40,30 @@
     </div>
 
     <main class="my-projects-layout" role="main">
-        <section class="view-intro">
-            <h1>Mis proyectos</h1>
-            <p>Lleva un seguimiento de lo que creaste para la comunidad. Desliza las cartas para navegar entre tus proyectos o arrástralas hacia arriba para ver cada detalle.</p>
+        <section class="view-intro hero-block" aria-labelledby="hero-heading">
+            <span class="hero-eyebrow">Panel del creador</span>
+            <h1 id="hero-heading">Mis proyectos</h1>
+            <p class="hero-description">Revisa el estado de tus iniciativas y mantén al día la información que ve la comunidad.</p>
+
+            <div class="hero-summary" aria-label="Resumen de tus proyectos">
+                <div class="hero-summary__item">
+                    <span class="hero-summary__label">Totales</span>
+                    <span class="hero-summary__value" id="hero-total-projects">0</span>
+                </div>
+                <div class="hero-summary__item">
+                    <span class="hero-summary__label">Activos</span>
+                    <span class="hero-summary__value" id="hero-active-projects">0</span>
+                </div>
+                <div class="hero-summary__item">
+                    <span class="hero-summary__label">En pausa / planificación</span>
+                    <span class="hero-summary__value" id="hero-pending-projects">0</span>
+                </div>
+            </div>
+
+            <div class="hero-actions">
+                <a href="{{ url_for('feed') }}" class="hero-button secondary">Volver al feed</a>
+                <button type="button" class="hero-button primary" id="hero-open-expanded">Ver detalle actual</button>
+            </div>
         </section>
 
         <div class="card-container">
@@ -269,5 +290,70 @@
     <script src="/static/scripts/myProjects.js"></script>
     <script src="/static/scripts/script.js"></script>
     <script src="/static/scripts/projects.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const totalEl = document.getElementById('hero-total-projects');
+            const activeEl = document.getElementById('hero-active-projects');
+            const pendingEl = document.getElementById('hero-pending-projects');
+            const openDetailBtn = document.getElementById('hero-open-expanded');
+
+            if (!totalEl || !activeEl || !pendingEl) {
+                return;
+            }
+
+            const updateSummary = () => {
+                const manager = window.projectsManager;
+                if (!manager || !Array.isArray(manager.projects)) {
+                    return;
+                }
+                const projects = manager.projects;
+                const total = projects.length;
+                const active = projects.filter(
+                    (project) => (project.status || '').toUpperCase() === 'ACTIVE',
+                ).length;
+                const paused = projects.filter((project) => {
+                    const status = (project.status || '').toUpperCase();
+                    return status === 'ON_HOLD' || status === 'INACTIVE';
+                }).length;
+
+                totalEl.textContent = total;
+                activeEl.textContent = active;
+                pendingEl.textContent = paused;
+            };
+
+            const startTracking = () => {
+                const manager = window.projectsManager;
+                if (!manager) {
+                    requestAnimationFrame(startTracking);
+                    return;
+                }
+                if (!manager.__heroSummaryInterval) {
+                    manager.__heroSummaryInterval = window.setInterval(updateSummary, 1500);
+                }
+                updateSummary();
+            };
+
+            startTracking();
+
+            openDetailBtn?.addEventListener('click', () => {
+                const manager = window.projectsManager;
+                if (!manager?.expandedCard) {
+                    if (typeof showToastMessage === 'function') {
+                        showToastMessage('No hay proyecto seleccionado.', 'aviso');
+                    }
+                    return;
+                }
+                const current =
+                    (typeof manager.getCurrentProject === 'function' && manager.getCurrentProject()) ||
+                    manager.projects?.[manager.currentProjectIndex] ||
+                    null;
+                if (current && typeof manager.updateExpandedCard === 'function') {
+                    manager.updateExpandedCard(current);
+                }
+                manager.expandedCard.classList.remove('hidden');
+                manager.expandedCard.classList.add('visible');
+            });
+        });
+    </script>
 </body>
 </html>

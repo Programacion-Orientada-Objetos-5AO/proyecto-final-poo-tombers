@@ -107,6 +107,8 @@
             this.users = [];
             this.currentIndex = 0;
             this.totalInterested = 0;
+            this.acceptedCount = 0;
+            this.summaryCallback = null;
             this.isDragging = false;
             this.expandedOpen = false;
             this.isBusy = false;
@@ -123,6 +125,31 @@
         ensureAuth() {
             if (!window.apiClient?.auth?.isAuthenticated()) {
                 window.location.href = '/';
+            }
+        }
+
+        setSummaryCallback(callback) {
+            this.summaryCallback = typeof callback === 'function' ? callback : null;
+            this.notifySummary();
+        }
+
+        notifySummary() {
+            if (typeof this.summaryCallback !== 'function') {
+                return;
+            }
+            const users = Array.isArray(this.users) ? this.users : [];
+            const available = users.filter(
+                (user) => (user.status || '').toUpperCase() === 'DISPONIBLE',
+            ).length;
+            const detail = {
+                total: users.length,
+                available,
+                accepted: Number(this.acceptedCount || 0),
+            };
+            try {
+                this.summaryCallback(detail);
+            } catch (error) {
+                console.error('Resumen de interesados', error);
             }
         }
 
@@ -154,7 +181,10 @@
                 const response = await window.apiClient.get(`/api/projects/${this.projectId}/interested`);
                 const users = Array.isArray(response?.interestedUsers) ? response.interestedUsers : [];
                 this.users = users;
-                this.totalInterested = Number(response?.totalInterested) || users.length;
+                this.currentIndex = 0;
+                this.totalInterested = Number(response?.totalInterested ?? users.length);
+                this.acceptedCount = Number(response?.acceptedCount ?? 0);
+                this.notifySummary();
                 this.renderCurrentUser();
             } catch (error) {
                 console.error('Error al cargar interesados:', error);
@@ -246,6 +276,7 @@
                 }
             }
 
+            this.notifySummary();
             this.setButtonsEnabled(true);
             if (this.statusIndicators) {
                 this.statusIndicators.style.display = 'flex';
@@ -282,6 +313,10 @@
                     </div>
                 `;
             }
+            this.users = [];
+            this.currentIndex = 0;
+            this.totalInterested = 0;
+            this.notifySummary();
         }
 
         startDrag(event) {
@@ -457,6 +492,9 @@
                         ? `${getFullName(user)} fue agregado a tu equipo.`
                         : `${getFullName(user)} fue rechazado.`;
                 TOAST(message, 'exito');
+                if (action === 'ACCEPT') {
+                    this.acceptedCount = Number(this.acceptedCount || 0) + 1;
+                }
                 this.removeCurrentUser();
             } catch (error) {
                 const message =
@@ -473,6 +511,7 @@
                 return;
             }
             this.users.splice(this.currentIndex, 1);
+            this.totalInterested = Math.max(0, this.totalInterested - 1);
             if (this.currentIndex >= this.users.length) {
                 this.currentIndex = 0;
             }
@@ -629,6 +668,6 @@
             window.location.href = '/';
             return;
         }
-        new InterestedDeck();
+        window.interestedDeck = new InterestedDeck();
     });
 })();
