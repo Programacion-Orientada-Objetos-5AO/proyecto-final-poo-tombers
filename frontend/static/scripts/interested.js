@@ -1,4 +1,4 @@
-// Vista de interesados estilo "Tinder" para administradores de proyecto.
+﻿// Vista de interesados estilo "Tinder" para administradores de proyecto.
 
 (() => {
     const TOAST = (message, type = 'info') => {
@@ -183,13 +183,54 @@
                 this.users = users;
                 this.currentIndex = 0;
                 this.totalInterested = Number(response?.totalInterested ?? users.length);
-                this.acceptedCount = Number(response?.acceptedCount ?? 0);
-                this.notifySummary();
+                await this.loadProjectInfo(response?.project);
                 this.renderCurrentUser();
             } catch (error) {
                 console.error('Error al cargar interesados:', error);
                 this.showEmptyState('No se pudo cargar la lista de interesados. Intenta mas tarde.');
                 TOAST('No se pudo cargar la lista de interesados.', 'error');
+            }
+        }
+
+        async loadProjectInfo(projectFromResponse) {
+            try {
+                let projectData = projectFromResponse;
+                let membersCount = null;
+
+                const resolveMembers = (data) => {
+                    if (!data) {
+                        return null;
+                    }
+                    if (Array.isArray(data.members)) {
+                        return data.members.length;
+                    }
+                    if (Array.isArray(data.acceptedUsers)) {
+                        return data.acceptedUsers.length;
+                    }
+                    if (typeof data.accepted === 'number') {
+                        return Number(data.accepted);
+                    }
+                    if (typeof data?.stats?.team_current !== 'undefined') {
+                        return Number(data.stats.team_current);
+                    }
+                    return null;
+                };
+
+                membersCount = resolveMembers(projectData);
+                if (membersCount === null) {
+                    projectData = await window.apiClient.get(`/api/projects/${this.projectId}`);
+                    membersCount = resolveMembers(projectData);
+                }
+
+                if (membersCount === null) {
+                    membersCount = 0;
+                }
+
+                this.acceptedCount = Math.max(0, Number(membersCount) - 1);
+            } catch (error) {
+                console.warn('No se pudo obtener informacion del proyecto', error);
+            } finally {
+                this.notifySummary();
             }
         }
 
@@ -492,9 +533,7 @@
                         ? `${getFullName(user)} fue agregado a tu equipo.`
                         : `${getFullName(user)} fue rechazado.`;
                 TOAST(message, 'exito');
-                if (action === 'ACCEPT') {
-                    this.acceptedCount = Number(this.acceptedCount || 0) + 1;
-                }
+                await this.loadProjectInfo();
                 this.removeCurrentUser();
             } catch (error) {
                 const message =

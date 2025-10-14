@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -185,6 +185,13 @@
     <script src="/static/scripts/interested.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const toast = (message, type = 'info') => {
+                if (typeof showToastMessage === 'function') {
+                    showToastMessage(message, type);
+                } else {
+                    console.log(`[${type}] ${message}`);
+                }
+            };
             const totalEl = document.getElementById('hero-total-interested');
             const availableEl = document.getElementById('hero-available-interested');
             const acceptedEl = document.getElementById('hero-accepted-interested');
@@ -243,9 +250,7 @@
                     deck.users?.[deck.currentIndex] ||
                     null;
                 if (!current) {
-                    if (typeof showToastMessage === 'function') {
-                        showToastMessage('No hay postulaciones para mostrar.', 'aviso');
-                    }
+                    toast('No hay postulaciones para mostrar.', 'aviso');
                     return;
                 }
                 deck.openExpanded?.();

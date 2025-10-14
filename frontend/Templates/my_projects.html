@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -292,6 +292,13 @@
     <script src="/static/scripts/projects.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const toast = (message, type = 'info') => {
+                if (typeof showToastMessage === 'function') {
+                    showToastMessage(message, type);
+                } else {
+                    console.log(`[${type}] ${message}`);
+                }
+            };
             const totalEl = document.getElementById('hero-total-projects');
             const activeEl = document.getElementById('hero-active-projects');
             const pendingEl = document.getElementById('hero-pending-projects');
@@ -338,9 +345,7 @@
             openDetailBtn?.addEventListener('click', () => {
                 const manager = window.projectsManager;
                 if (!manager?.expandedCard) {
-                    if (typeof showToastMessage === 'function') {
-                        showToastMessage('No hay proyecto seleccionado.', 'aviso');
-                    }
+                    toast('No hay proyecto seleccionado.', 'aviso');
                     return;
                 }
                 const current =
