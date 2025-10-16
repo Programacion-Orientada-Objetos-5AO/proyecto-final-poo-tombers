@@ -157,7 +157,7 @@ class ProfileManager {
 
     renderSkills() {
         const skills = Array.isArray(this.profile?.skills) ? this.profile.skills : [];
-        const fallback = skills.length > 0 ? skills : ['Sin habilidades cargadas'];
+        const fallback = skills.length > 0 ? skills : [];
 
         const cardTech = this.projectCard?.querySelector('.card-tech');
         if (cardTech) {
