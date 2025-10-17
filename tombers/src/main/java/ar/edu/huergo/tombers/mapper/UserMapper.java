@@ -28,6 +28,7 @@ public interface UserMapper {
     @Mapping(target = "likedProjectsIds", source = "likedProjectIds")
     @Mapping(target = "dislikedProjectsIds", source = "dislikedProjectIds")
     @Mapping(target = "participatingProjectsIds", source = "participatingProjectIds")
+    @Mapping(target = "averageRating", ignore = true) // Se calcula en el servicio
     UserResponse toDto(User user);
 
     /**

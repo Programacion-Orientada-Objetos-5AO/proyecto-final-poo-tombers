@@ -38,6 +38,7 @@ public class UserResponse {
     private List<Long> likedProjectsIds;
     private List<Long> dislikedProjectsIds;
     private List<Long> participatingProjectsIds;
+    private Double averageRating;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

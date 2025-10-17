@@ -138,6 +138,18 @@ class ProfileManager {
             expandedStats[2].textContent = this.profile.specialization || 'N/D';
         }
 
+        // Render average rating
+        const averageRating = this.profile.averageRating || 0;
+        const starRating = this.generateStarRating(averageRating);
+        const cardStarRating = this.projectCard?.querySelector('.star-rating');
+        if (cardStarRating) {
+            cardStarRating.innerHTML = starRating;
+        }
+        const expandedStarRating = this.expandedCard?.querySelector('#average-rating');
+        if (expandedStarRating) {
+            expandedStarRating.innerHTML = starRating;
+        }
+
         const cardDescription = this.projectCard?.querySelector('.card-description');
         if (cardDescription) {
             cardDescription.textContent = this.profile.bio || 'Todavía no completaste tu biografía.';
@@ -648,6 +660,24 @@ class ProfileManager {
             .join('')
             .slice(0, 3)
             .toUpperCase();
+    }
+
+    generateStarRating(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+        let stars = '';
+        for (let i = 0; i < fullStars; i++) {
+            stars += '★';
+        }
+        if (hasHalfStar) {
+            stars += '☆'; // Use a different character for half star if needed, but for simplicity using ☆
+        }
+        for (let i = 0; i < emptyStars; i++) {
+            stars += '☆';
+        }
+        return stars;
     }
 
     getSkillLabel(skill) {

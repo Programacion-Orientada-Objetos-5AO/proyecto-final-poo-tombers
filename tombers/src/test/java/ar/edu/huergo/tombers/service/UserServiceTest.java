@@ -36,6 +36,7 @@ class UserServiceTest {
     @Mock private UserMapper userMapper;
     @Mock private RolRepository rolRepository;
     @Mock private FileStorageService fileStorageService;
+    @Mock private UserRatingService userRatingService;
     @InjectMocks private UserService userService;
 
     private User sampleUser() {

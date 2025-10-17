@@ -13,7 +13,6 @@ import ar.edu.huergo.tombers.entity.User;
 import ar.edu.huergo.tombers.mapper.UserMapper;
 import ar.edu.huergo.tombers.repository.UserRepository;
 import ar.edu.huergo.tombers.repository.security.RolRepository;
-
 import ar.edu.huergo.tombers.service.storage.FileStorageService;
 import ar.edu.huergo.tombers.service.storage.StorageDirectory;
 import ar.edu.huergo.tombers.service.storage.StoredFile;
@@ -28,11 +27,12 @@ public class UserService {
     private final UserMapper userMapper;
     private final FileStorageService fileStorageService;
     private final RolRepository rolRepository;
+    private final UserRatingService userRatingService;
 
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(userMapper::toDto)
+                .map(this::toDtoWithRating)
                 .toList();
     }
 
@@ -46,7 +46,13 @@ public class UserService {
     public UserResponse getUserProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + email));
-        return userMapper.toDto(user);
+        return toDtoWithRating(user);
+    }
+
+    private UserResponse toDtoWithRating(User user) {
+        UserResponse response = userMapper.toDto(user);
+        response.setAverageRating(userRatingService.getAverageRatingForUser(user.getId()));
+        return response;
     }
 
         /**
@@ -76,7 +82,7 @@ public class UserService {
 
         User updatedUser = userRepository.save(user);
 
-        return userMapper.toDto(updatedUser);
+        return toDtoWithRating(updatedUser);
     }
 
 
@@ -111,6 +117,6 @@ public class UserService {
                 .build();
 
         User savedUser = userRepository.save(newUser);
-        return userMapper.toDto(savedUser);
+        return toDtoWithRating(savedUser);
     }
 }
