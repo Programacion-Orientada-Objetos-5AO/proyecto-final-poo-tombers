@@ -1,0 +1,288 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/styles/style.css">
+    <title>TomberS - Proyectos</title>
+</head>
+<body style="justify-content: center; align-items: center;">
+    <div class="logo-container">
+        <img src="/static/imagenes/logoTomberS.png" alt="Logo Tomber Sur" class="logo-img">
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="menu-icons">
+            <div class="menu-icon hamburger"></div>
+            <div class="menu-icon gear"></div>
+            <a href="{{ url_for('my_projects') }}" class="menu-icon layers" title="Mis proyectos"></a>
+            <a href="{{ url_for('bio') }}" class="menu-icon user"></a>
+            <div class="menu-icon download"></div>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="sidebar-trigger" id="sidebar-trigger"></div>
+
+    <div class="mobile-header" id="mobile-header">
+        <img src="/static/imagenes/logoTomberS.png" alt="Logo Tomber Sur" class="logo-img-mini">
+        <div class="menu-icons">
+            <a href="{{ url_for('feed') }}" class="menu-icon house"></a>
+            <div class="menu-icon gear"></div>
+            <a href="{{ url_for('my_projects') }}" class="menu-icon layers" title="Mis proyectos"></a>
+            <a href="{{ url_for('bio') }}" class="menu-icon user"></a>
+            <div class="menu-icon download"></div>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="theme-togglemo">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="card-container">
+        <div class="project-card" id="project-card">
+            <div class="card-title-row">
+                <h2 class="card-title">Nombre del proyecto</h2>
+            </div>
+            <div class="card-image"></div>
+            <div class="card-stats">
+                <span><span class="fluent--people-team-16-filled iconos"></span><span class="stats-text">07/23</span></span>
+                <span><span class="tabler--clock iconos"></span><span class="stats-text">Indefinido</span></span>
+                <span><span class="material-symbols--translate iconos"></span><span class="stats-text">Español</span></span>
+                <span><span class="mdi--tools iconos"></span><span class="stats-text">Full Stack</span></span>
+            </div>
+            <div class="card-description">
+                Seleccioná un proyecto para ver los detalles. Acá vas a encontrar una descripción breve del objetivo y el impacto esperado.
+            </div>
+            <div class="card-tech">
+                <div class="tech-icon">Py</div>
+                <div class="tech-icon">Html</div>
+                <div class="tech-icon">Css</div>
+                <div class="tech-icon">Js</div>
+            </div>
+            <div class="actions">
+                <svg class="rotate-icon" viewBox="0 0 24 24">
+                    <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-indicators" id="status-indicators">
+        <div class="dislike-indicator">Descartar</div>
+        <div class="ampliar-indicator">▲ Ver más ▲</div>
+        <div class="like-indicator">Unirme</div>
+    </div>
+
+    <div class="create-project-container">
+        <button class="create-project-btn" id="create-project-btn">
+            <span class="create-icon">+</span>
+            Crear proyecto
+        </button>
+    </div>
+
+    <div class="expanded-card hidden" id="expanded-card">
+        <button class="close-expanded" id="close-expanded">&times;</button>
+        <div class="expanded-content">
+            <div class="expanded-header">
+                <h2 class="expanded-title">Sistema de Gestión Empresarial</h2>
+                <div class="expanded-status">
+                    <span class="status-badge active">Activo</span>
+                </div>
+            </div>
+
+            <div class="expanded-main">
+                <div class="expanded-left">
+                    <div class="expanded-image">
+                        <img src="/static/imagenes/coding-foto-ejemplo.jpg" alt="Vista previa del proyecto">
+                        <div class="image-overlay">
+                            <span class="view-badge">Vista previa</span>
+                        </div>
+                    </div>
+
+                    <div class="expanded-stats-grid">
+                        <div class="stat-item">
+                            <span class="fluent--people-team-16-filled"></span>
+                            <div class="stat-content">
+                                <span class="stat-label">Equipo</span>
+                                <span class="stat-value">07/23</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="tabler--clock"></span>
+                            <div class="stat-content">
+                                <span class="stat-label">Duración</span>
+                                <span class="stat-value">Indefinida</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="material-symbols--translate"></span>
+                            <div class="stat-content">
+                                <span class="stat-label">Idioma</span>
+                                <span class="stat-value">Español</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="mdi--tools"></span>
+                            <div class="stat-content">
+                                <span class="stat-label">Tipo</span>
+                                <span class="stat-value">Full Stack</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="expanded-progress">
+                        <div class="progress-label">Avance del proyecto</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="progress-text">0% completado</span>
+                    </div>
+                </div>
+
+                <div class="expanded-right">
+                    <div class="section">
+                        <h3 class="section-title">Descripción</h3>
+                        <p class="section-content">La información completa del proyecto se mostrará acá cuando selecciones una propuesta de la lista.</p>
+                    </div>
+                    <div class="section">
+                        <h3 class="section-title">Integrantes</h3>
+                        <div class="members-list"></div>
+                    </div>
+                    <div class="section">
+                        <h3 class="section-title">Tecnologías</h3>
+                        <div class="tech-grid"></div>
+                    </div>
+                    <div class="section">
+                        <h3 class="section-title">Objetivos</h3>
+                        <div class="objectives-list"></div>
+                    </div>
+                    <div class="section">
+                        <h3 class="section-title">Aptitudes requeridas</h3>
+                        <div class="skills-grid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expanded-footer">
+                <div class="footer-actions">
+                    <button class="action-btn primary" data-action="join">Unirse al proyecto</button>
+                    <button class="action-btn secondary" data-action="repository">Ver repositorio</button>
+                    <button class="action-btn tertiary" data-action="contact">Contactar equipo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="create-project-card hidden" id="create-project-card">
+        <div class="create-content">
+            <div class="create-header">
+                <h2 class="create-title">Crear nuevo proyecto</h2>
+            </div>
+
+            <form class="create-form" id="create-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="project-name">Nombre del proyecto *</label>
+                        <input type="text" id="project-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-status">Estado</label>
+                        <select id="project-status">
+                            <option value="ACTIVE">Activo</option>
+                            <option value="ON_HOLD">En planificación</option>
+                            <option value="INACTIVE">En pausa</option>
+                            <option value="COMPLETED">Completado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="team-size">Máximo de integrantes</label>
+                        <input type="text" id="team-size" placeholder="Ej: 8 o 3/8">
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duración</label>
+                        <input type="text" id="duration" placeholder="Ej: 3 meses">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="language">Idioma</label>
+                        <select id="language">
+                            <option value="Español">Español</option>
+                            <option value="Inglés">Inglés</option>
+                            <option value="Portugués">Portugués</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-type">Tipo de proyecto</label>
+                        <select id="project-type">
+                            <option value="Full Stack">Full Stack</option>
+                            <option value="Frontend">Frontend</option>
+                            <option value="Backend">Backend</option>
+                            <option value="Mobile">Mobile</option>
+                            <option value="Data Science">Data Science</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="progress">Avance actual (%)</label>
+                        <input type="number" id="progress" min="0" max="100" value="0" placeholder="Ej: 45">
+                    </div>
+                    <div class="form-group">
+                        <label for="objectives">Objetivos principales (uno por línea)</label>
+                        <textarea id="objectives" rows="3" placeholder="Definir alcance&#10;Publicar MVP&#10;Iterar con feedback"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Descripción del proyecto *</label>
+                    <textarea id="description" rows="4" required placeholder="Contá los objetivos, entregables y el impacto que buscás..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="project-image">Imagen del proyecto</label>
+                    <div class="image-upload-container">
+                        <input type="file" id="project-image" accept="image/*" class="image-input">
+                        <div class="image-preview" id="image-preview">
+                            <div class="image-placeholder">
+                                <span class="upload-icon">&#128247;</span>
+                                <span class="upload-text">Seleccionar imagen</span>
+                            </div>
+                            <img id="preview-img" class="preview-image" style="display: none;" alt="Vista previa">
+                            <button type="button" class="remove-image" id="remove-image" style="display: none;">&times;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="technologies">Tecnologías (separadas por comas)</label>
+                    <input type="text" id="technologies" placeholder="Python, React, Node.js, MongoDB">
+                </div>
+
+                <div class="form-group">
+                    <label for="skills">Aptitudes buscadas (separadas por comas)</label>
+                    <input type="text" id="skills" placeholder="Backend, UI/UX, Testing">
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="action-btn secondary" id="cancel-create">Cancelar</button>
+                    <button type="submit" class="action-btn primary">Crear proyecto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/scripts/apiClient.js"></script>
+    <script src="/static/scripts/uiCommon.js"></script>
+    <script src="/static/scripts/script.js"></script>
+    <script src="/static/scripts/projects.js"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+package ar.edu.huergo.tombers.service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import ar.edu.huergo.tombers.dto.auth.AuthResponse;
+import ar.edu.huergo.tombers.dto.auth.LoginRequest;
+import ar.edu.huergo.tombers.dto.auth.RegisterRequest;
+import ar.edu.huergo.tombers.entity.Rol;
+import ar.edu.huergo.tombers.entity.User;
+import ar.edu.huergo.tombers.repository.UserRepository;
+import ar.edu.huergo.tombers.repository.security.RolRepository;
+import ar.edu.huergo.tombers.security.JwtTokenService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenService jwtTokenService;
+    private final AuthenticationManager authenticationManager;
+    private final RolRepository rolRepository;
+
+    /**
+     * Registra un nuevo usuario en el sistema.
+     *
+     * @param request la solicitud de registro con los datos del usuario
+     * @return un objeto AuthResponse con el token JWT y la información del usuario registrado
+     * @throws IllegalArgumentException si el email o username ya están en uso
+     */
+    public AuthResponse register(RegisterRequest request) {
+        // Verificar si el email ya existe
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("El email ya está registrado");
+        }
+
+        // Verificar si el username ya existe
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new IllegalArgumentException("El nombre de usuario ya está en uso");
+        }
+
+        // Obtener rol CLIENTE desde la base de datos
+        Rol rolCliente = rolRepository.findByNombre("CLIENTE")
+                .orElseThrow(() -> new IllegalArgumentException("Rol 'CLIENTE' no encontrado"));
+
+        // Crear nuevo usuario
+        User user = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .skills(request.getSkills() != null ? request.getSkills() : List.of())
+                .age(request.getAge())
+                .birthDate(request.getBirthDate())
+                .languages(request.getLanguages())
+                .specialization(request.getSpecialization())
+                .phone(request.getPhone())
+                .linkedin(request.getLinkedin())
+                .github(request.getGithub())
+                .portfolio(request.getPortfolio())
+                .bio(request.getBio())
+                .status(User.UserStatus.DISPONIBLE)
+                .certifications(request.getCertifications() != null ? request.getCertifications() : List.of())
+                .interests(request.getInterests() != null ? request.getInterests() : List.of())
+                .roles(Set.of(rolCliente))
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        // Generar token JWT
+        // Construimos la lista de roles con el prefijo ROLE_ esperado por seguridad
+        var roles = savedUser.getRoles().stream()
+                .map(r -> "ROLE_" + r.getNombre())
+                .toList();
+        String token = jwtTokenService.generarToken(savedUser, roles);
+
+        return AuthResponse.builder()
+                .message("Usuario registrado exitosamente")
+                .token(token)
+                .user(AuthResponse.UserInfo.builder()
+                        .id(savedUser.getId())
+                        .username(savedUser.getUsername())
+                        .firstName(savedUser.getFirstName())
+                        .lastName(savedUser.getLastName())
+                        .email(savedUser.getEmail())
+                        .build())
+                .build();
+    }
+
+    /**
+     * Inicia sesión de un usuario y genera un token JWT.
+     *
+     * @param request la solicitud de inicio de sesión con email y contraseña
+     * @return un objeto AuthResponse con el token JWT y la información del usuario
+     * @throws EntityNotFoundException si el usuario no existe
+     */
+    public AuthResponse login(LoginRequest request) {
+        // Autenticar usuario
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+
+        // Obtener usuario autenticado
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        // Generar token JWT
+        var roles = user.getRoles() != null ? user.getRoles().stream()
+                .map(r -> "ROLE_" + r.getNombre())
+                .toList() : java.util.List.<String>of();
+        String token = jwtTokenService.generarToken(user, roles);
+
+        return AuthResponse.builder()
+                .message("Inicio de sesión exitoso")
+                .token(token)
+                .user(AuthResponse.UserInfo.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .email(user.getEmail())
+                        .build())
+                .build();
+    }
+}
