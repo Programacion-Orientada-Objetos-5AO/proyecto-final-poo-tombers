@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import ar.edu.huergo.tombers.dto.DTOPRequest;
 import lombok.RequiredArgsConstructor;
 import ar.edu.huergo.tombers.dto.DTOPResponse;
+import ar.edu.huergo.tombers.dto.DTOPResumenCategoria;
 import ar.edu.huergo.tombers.mapper.ProductoMapper;
 import ar.edu.huergo.tombers.entity.Producto;
 import ar.edu.huergo.tombers.repository.ProductoRepository;
@@ -47,6 +48,61 @@ public class ProductoService {
         productoRepository.delete(producto);
     }
 
+    public List<Producto> obtenerProductosPorCategoria(String categoria) {
+        return productoRepository.findByCategoriaContainingIgnoreCase(categoria);
+    }
+
+    public void actualizarStock(Long id, Integer nuevoStock){
+        Producto producto = obtenerProductoPorId(id);
+        producto.setStock(nuevoStock);
+        productoRepository.save(producto);
+    }
+
+    public DTOPResumenCategoria generarResumenCategoria(String categoria) {
+        DTOPResumenCategoria resumen = new DTOPResumenCategoria(null , null , null , null , null, null);
+        List<Producto> listaProductos = obtenerProductosPorCategoria(categoria);
+        Integer totalProductos = listaProductos.size();
+        Double valorTotalInventario = 0.0;
+        String productoMinimo = "Ninguno";
+        Double minimo = 99999999999999.0;
+        Double maximo = 0.0;
+        String productoMaximo = "Ninguno";
+        Double sumaPrecios = 0.0;
+        Double contador = 0.0;
+        for (Producto producto : listaProductos){
+            String nombreProducto = producto.getNombre();
+            Double precioProducto = producto.getPrecio();
+            Double valorProducto = precioProducto * producto.getStock();
+
+            contador = contador + 1;
+            sumaPrecios = sumaPrecios + precioProducto;
+
+            if (precioProducto < minimo){
+                minimo = precioProducto;
+                productoMinimo = nombreProducto;
+            }
+
+            if (precioProducto >= maximo){
+                maximo = precioProducto;
+                productoMaximo = nombreProducto;
+            }
+
+            valorTotalInventario += valorProducto;
+        }
+        Double precioPromedio = 0.0;
+        if (contador != 0){
+            precioPromedio = sumaPrecios / contador;
+        }
+
+        resumen.setNombreCategoria(categoria);
+        resumen.setTotalProductos(totalProductos);
+        resumen.setValorTotalInventario(valorTotalInventario);
+        resumen.setProductoMasCaro(productoMaximo);
+        resumen.setProductoMasBarato(productoMinimo);
+        resumen.setPromedioPrecios(precioPromedio);
+
+        return resumen;
+    }
 }
 
 

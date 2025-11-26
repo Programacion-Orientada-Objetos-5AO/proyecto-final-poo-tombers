@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import ar.edu.huergo.tombers.dto.DTOPResponse;
 import ar.edu.huergo.tombers.entity.Producto;
-
+import java.util.List;
 
 @Component
 public class ProductoMapper {
@@ -31,4 +31,11 @@ public class ProductoMapper {
                 .stock(dtoPResponse.getStock())
                 .build();
     }
+
+    public List<DTOPResponse> toDtoList(List<Producto> productos) {
+    return productos.stream()
+            .map(this::toDto)
+            .toList();
+    }
+
 }

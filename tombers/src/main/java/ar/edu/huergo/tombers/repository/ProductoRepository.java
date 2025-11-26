@@ -9,6 +9,6 @@ import ar.edu.huergo.tombers.entity.Producto;
 
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
-
+    List<Producto> findByCategoriaContainingIgnoreCase(String categoria);
     
 }

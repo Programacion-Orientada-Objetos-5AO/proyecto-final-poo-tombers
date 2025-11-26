@@ -9,6 +9,7 @@ import java.util.List;
 
 import ar.edu.huergo.tombers.dto.DTOPRequest;
 import ar.edu.huergo.tombers.dto.DTOPResponse;
+import ar.edu.huergo.tombers.dto.DTOPResumenCategoria;
 import ar.edu.huergo.tombers.service.ProductoService;
 import ar.edu.huergo.tombers.repository.ProductoRepository;
 import ar.edu.huergo.tombers.mapper.ProductoMapper;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+
 import ar.edu.huergo.tombers.entity.Producto;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -67,6 +70,24 @@ public class ProductoController {
     public String eliminarProducto(@Valid @PathVariable Long id) {
         productoService.eliminarProducto(id);
         return "Producto eliminado exitosamente";
+    }
+
+    @GetMapping("categoria/{categoria}")
+    public List<DTOPResponse> mostrarProductosPorCategoria(@Valid @PathVariable String categoria) {
+        List<Producto> listaProductos = productoService.obtenerProductosPorCategoria(categoria);
+        return productoMapper.toDtoList(listaProductos);
+    }
+
+    @PatchMapping("actualizarStock/{id}")
+    public String actualizarStock(@Valid @PathVariable Long id , @RequestBody Integer stock){
+        productoService.actualizarStock(id, stock);
+        return "Stock actualizado correctamente.";
+    }
+    
+    @GetMapping("resumenCategoria/{categoria}")
+    public DTOPResumenCategoria mostrarResumenCategoria(@Valid @PathVariable String categoria) {
+        DTOPResumenCategoria resumen = productoService.generarResumenCategoria(categoria);
+        return resumen;
     }
     
 }
