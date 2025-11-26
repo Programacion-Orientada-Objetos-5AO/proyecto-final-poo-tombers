@@ -54,6 +54,7 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/inventario/**").permitAll()
                 .requestMatchers("/api/projects/**").hasAnyRole("CLIENTE", "ADMIN")
                 .requestMatchers("/api/users/**").hasAnyRole("CLIENTE", "ADMIN")
                 .requestMatchers("/api/users/CreateProfile").hasRole("ADMIN")
